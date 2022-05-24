@@ -1,0 +1,9 @@
+{
+  "Authors": "Authors include Cappycot",
+  "Version": "00000000-0000-0000-0000-000000000000",
+  "ComponentId": {
+    "Guid": "1e69d7fd-207e-4c41-a2cc-129a5f5b2e6a",
+    "Name": "Craft Controller Camera"
+  },
+  "Description": "Experimental craft camera mode with added controls"
+}
