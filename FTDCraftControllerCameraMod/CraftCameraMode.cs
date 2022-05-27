@@ -39,7 +39,7 @@ namespace FTDCraftControllerCameraMod
         {
             ccc = cCameraControl;
             hud = iHUD;
-            movement = ClientInterface.GetInterface()?.Get_I_world_cMovement();
+            movement = ClientInterface.GetInterface().Get_I_world_cMovement();
             Subject = mainConstruct;
             zoom = HybridZoom.Exponential(1.5f, 1f, 10f, 0.5f, 0.1f, 5f);
         }

@@ -75,6 +75,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CameraModeHooks.cs" />
+    <Compile Include="ChairHooks.cs" />
+    <Compile Include="ItemHooks.cs" />
+    <Compile Include="InputHooks.cs" />
     <Compile Include="ControllerHooks.cs" />
     <Compile Include="CraftControllerAir.cs" />
     <Compile Include="CraftCameraType.cs" />

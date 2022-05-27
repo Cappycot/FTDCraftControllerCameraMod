@@ -26,8 +26,8 @@ namespace FTDCraftControllerCameraMod
 #pragma warning restore CS0252
                 {
                     // Check if avatar is in chair.
-                    I_world_cMovement i_world_cMovement = ClientInterface.GetInterface()?.Get_I_world_cMovement();
-                    if (i_world_cMovement.IsInChair())
+                    I_world_cMovement i_world_cMovement = ClientInterface.GetInterface().Get_I_world_cMovement();
+                    if (i_world_cMovement != null && i_world_cMovement.IsInChair())
                     {
                         MainConstruct subject = i_world_cMovement.TheChair().MainConstruct as MainConstruct;
                         Main.craftCameraMode = Main.craftCameraMode ?? new CraftCameraMode(__instance, ___iHUD, subject);
@@ -72,7 +72,7 @@ namespace FTDCraftControllerCameraMod
         /// </summary>
         [HarmonyPatch("ChangeCameraMode")]
         [HarmonyPrefix]
-        public static bool CancelCraftCamera(cCameraControl __instance)
+        public static bool CancelCraftCamera()
         {
             if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode)
             {

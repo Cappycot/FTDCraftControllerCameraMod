@@ -24,6 +24,7 @@ namespace FTDCraftControllerCameraMod
         {
             if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode
                 && Main.craftCameraMode.CameraType == EnumCraftCameraType.AIR_DEFAULT
+                // && Main.airControlSubject == Main.craftCameraMode.Subject
                 && Main.craftCameraMode.Subject == __instance.MainConstruct)
             {
                 IMainConstructBlock subject = __instance.MainConstruct;

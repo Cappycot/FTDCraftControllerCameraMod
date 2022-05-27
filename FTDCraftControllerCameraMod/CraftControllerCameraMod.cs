@@ -12,6 +12,7 @@ namespace FTDCraftControllerCameraMod
         public Version version { get; } = new Version(1, 0, 0);
 
         public static CraftCameraMode craftCameraMode = null;
+        // public static MainConstruct airControlSubject = null; // TODO: Find a key to toggle this.
 
         public void OnLoad()
         {

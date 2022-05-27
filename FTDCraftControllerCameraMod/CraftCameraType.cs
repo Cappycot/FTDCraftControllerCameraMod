@@ -20,7 +20,7 @@ namespace FTDCraftControllerCameraMod
         {
             // Try guessing based on the controller block being used.
             // DIRTY HACK - The type cast *should* succeed, but what if it somehow doesn't?
-            ConstructableController controller = (ClientInterface.GetInterface()?.Get_I_world_cControl() as cControl).GetControlModule().ActiveController;
+            ConstructableController controller = (ClientInterface.GetInterface().Get_I_world_cControl() as cControl)?.GetControlModule().ActiveController;
             if (controller != null)
             {
                 switch (controller.Data.Type.Us)
