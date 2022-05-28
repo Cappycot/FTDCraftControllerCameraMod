@@ -16,6 +16,27 @@ namespace FTDCraftControllerCameraMod
             return !b || CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
         }
 
+        [HarmonyPatch("RightClick")]
+        [HarmonyPrefix]
+        public static bool BlockRightClick(bool b)
+        {
+            return !b || CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+        }
+
+        [HarmonyPatch("LeftClickDown")]
+        [HarmonyPrefix]
+        public static bool BlockLeftClickDown()
+        {
+            return CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+        }
+
+        [HarmonyPatch("RightClickDown")]
+        [HarmonyPrefix]
+        public static bool BlockRightClickDown()
+        {
+            return CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+        }
+
         /// <summary>
         /// Redirect (default) key 0-9 to weapon slots.
         /// </summary>
