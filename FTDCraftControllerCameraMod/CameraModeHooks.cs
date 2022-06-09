@@ -57,7 +57,7 @@ namespace FTDCraftControllerCameraMod
             __result = __result && CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
         }
 
-        /// <summary>
+        /*// <summary>
         /// Need the player to still be able to "jump" out of the seat.
         /// </summary>
         [HarmonyPatch("PlayerInControlOfCharacter", MethodType.Getter)]
@@ -65,7 +65,7 @@ namespace FTDCraftControllerCameraMod
         public static void FixPlayerInControlOfCharacter(ref bool __result)
         {
             __result = __result || CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode;
-        }
+        }*/
 
         /// <summary>
         /// Lets the player tab back into normal first person mode.

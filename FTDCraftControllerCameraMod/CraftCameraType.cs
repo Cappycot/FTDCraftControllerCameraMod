@@ -9,9 +9,13 @@ namespace FTDCraftControllerCameraMod
 {
     public enum EnumCraftCameraType
     {
-        AIR_DEFAULT, // Center origin at COM plus half the craft height
-        SHIP_DEFAULT // Center origin at twice the height difference
-                     // between the COM and bottom of craft
+        // AIR: Center origin at COM plus half the craft height
+        AIR_DEFAULT, // WASD pitches and rolls
+        AIR_HOVER, // WASD moves forward, backward, left, and right
+        AIR_UPRIGHT,
+        // SHIP: Center origin at twice the height difference
+        // between the COM and bottom of craft
+        SHIP_DEFAULT
     }
 
     public class CraftCameraType
