@@ -126,7 +126,7 @@ namespace FTDCraftControllerCameraMod
                 if (hover_test && last_hover_save && !rolling && wasd_dir.y == 0f)
                 {
                     float hover = hoverControl.NewMeasurement(last_hover_height, current_alt, GameTimer.Instance.TimeCache);
-                    float hover_pitch = sTransform.eulerAngles.x;
+                    float hover_pitch = NormalizeAngle(sTransform.eulerAngles.x);
                     subject.ControlsRestricted.MakeRequest(ControlType.HoverUp, hover
                         * Mathf.Cos(hover_pitch * Mathf.Deg2Rad)
                         * Mathf.Cos(sTransform.eulerAngles.z * Mathf.Deg2Rad));
