@@ -30,10 +30,10 @@ namespace FTDCraftControllerCameraMod
         private cCameraControl ccc;
         private I_cMovement_HUD hud;
         private I_world_cMovement movement;
-        public MainConstruct Subject { get; private set; }
         public EnumCraftCameraType CameraType { get; private set; } = 0;
-        private MouseLook mouseLook;
-        private HybridZoom zoom;
+        public MouseLook MouseLook { get; private set; }
+        public MainConstruct Subject { get; private set; }
+        public HybridZoom Zoom { get; private set; }
 
         public CraftCameraMode(cCameraControl cCameraControl, I_cMovement_HUD iHUD, MainConstruct mainConstruct)
         {
@@ -41,7 +41,7 @@ namespace FTDCraftControllerCameraMod
             hud = iHUD;
             movement = ClientInterface.GetInterface().Get_I_world_cMovement();
             Subject = mainConstruct;
-            zoom = HybridZoom.Exponential(1.5f, 1f, 10f, 0.5f, 0.1f, 5f);
+            Zoom = HybridZoom.Exponential(1.5f, 1f, 10f, 0.5f, 0.1f, 5f);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace FTDCraftControllerCameraMod
             float spaceToMassHeight = height - Mathf.Abs(centerMassToSpace.y);
             centerMassToSpace.y = 0f;
 
-            float currentZoom = zoom.Update(Time.deltaTime);
+            float currentZoom = Zoom.Update(Time.deltaTime);
             float radius = (Mathf.Max(length, width) + centerMassToSpace.magnitude)
                 * currentZoom;
 
@@ -90,7 +90,7 @@ namespace FTDCraftControllerCameraMod
             float length = Subject.AllBasics.sz / 2f;
             float width = Subject.AllBasics.sx / 2f;
             float height = Subject.AllBasics.sy / 2f;
-            float currentZoom = zoom.Update(Time.deltaTime);
+            float currentZoom = Zoom.Update(Time.deltaTime);
 
             float radius = Mathf.Max(length, width);
             float shapeToCircle = Mathf.SmoothStep(0f, 1f,
@@ -132,15 +132,15 @@ namespace FTDCraftControllerCameraMod
             {
                 // Create Transform.
                 GameObject gameObject = new GameObject("Craft Camera");
-                mouseLook = gameObject.AddComponent<MouseLook>();
-                mouseLook.enabled = false;
+                MouseLook = gameObject.AddComponent<MouseLook>();
+                MouseLook.enabled = false;
                 Transform = gameObject.transform;
                 // Start transform where the camera was.
                 // CameraManager.GetSingleton().MatchTransformToCurrentMode(Transform);
                 // Start transform at vehicle's forward rotation.
                 Transform.rotation = Quaternion.Euler(0f, Subject.myTransform.eulerAngles.y, 0f);
                 // Transform.SetRotationWithoutRoll();
-                mouseLook.Match();
+                MouseLook.Match();
                 Reenter();
             }
         }
@@ -161,13 +161,13 @@ namespace FTDCraftControllerCameraMod
             CameraType = CraftCameraType.GuessConstructCameraType(Subject);
             CameraManager.GetSingleton().CancelExternalCameraFocus();
             hud.SetCameraState(enumCameraState.unparented);
-            mouseLook.enabled = true;
+            MouseLook.enabled = true;
             UpdatePosition();
         }
 
         public void Supersede(ICameraMode nextMode)
         {
-            mouseLook.enabled = false;
+            MouseLook.enabled = false;
         }
 
         public void Cancel()

@@ -13,7 +13,10 @@ namespace FTDCraftControllerCameraMod
         AIR_DEFAULT, // WASD pitches and rolls
         AIR_HOVER, // WASD moves forward, backward, left, and right
         AIR_UPRIGHT,
-        // SHIP: Center origin at twice the height difference
+        // LAND: Center origin at COS and
+        // set height to top of craft.
+        // SHIP: Center origin at COS and
+        // set height to twice the height difference
         // between the COM and bottom of craft
         SHIP_DEFAULT
     }
@@ -46,8 +49,14 @@ namespace FTDCraftControllerCameraMod
             AiMaster theAI = null;
             IManoeuvre movement = null;
             for (int i = 0; i < ais.Count; i++)
-                if ((theAI = ais.Blocks[i].Node.Master).Pack.GetSelectedManoeuvre(out movement))
-                    break;
+            {
+                AiMaster ai = ais.Blocks[i].Node.Master;
+                if ((movement == null || theAI == null || ai.Priority > theAI.Priority) && ai.Pack.GetSelectedManoeuvre(out IManoeuvre tempMovement))
+                {
+                    theAI = ai;
+                    movement = tempMovement;
+                }
+            }
             if (movement != null)
             {
                 switch (movement)

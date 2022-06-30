@@ -68,6 +68,7 @@ namespace FTDCraftControllerCameraMod
                         break;
                 }
 
+                // TODO: Are these PIDs even okay in multiplayer?
                 subject.ControlsRestricted.PlayerControllingNow();
                 VariableControllerMaster yawControl = theAI.Common.YawControl;
                 VariableControllerMaster rollControl = theAI.Common.RollControl;
@@ -98,11 +99,12 @@ namespace FTDCraftControllerCameraMod
                 goalEula.x += wasd_dir.z * pitchToThrust; // Hover movement pitches for forward/backward movement.
 
                 // Calculate roll to pitch turn.
-                float rollLimit = Mathf.Abs(Mathf.Sin(Mathf.Deg2Rad * goalEula.y) * 90f);
+                float rollLimit = Mathf.Max(Mathf.Abs(Mathf.Sin(Mathf.Deg2Rad * goalEula.y) * 90f),
+                    Mathf.Abs(Mathf.Sin(Mathf.Deg2Rad * goalEula.x) * 90f));
                 float rollTest = NormalizeAngle(-rollRotation.eulerAngles.y);
                 rollTest = Mathf.Clamp(rollTest, -rollLimit, rollLimit);
                 bool rolling = Mathf.Abs(goalEula.y) > rollDeadzone;
-                if (rolling)
+                if (rolling || Mathf.Abs(goalEula.x) > rollDeadzone)
                     goalEula.z = rollTest;
                 else if (hover_test)
                     goalEula.z -= wasd_dir.x * rollToStrafe; // Hover movement rolls for left/right movement.
@@ -112,12 +114,9 @@ namespace FTDCraftControllerCameraMod
                 float pitch = pitchControl.NewMeasurement(goalEula.x, 0f, GameTimer.Instance.TimeCache);
                 float roll = rollControl.NewMeasurement(goalEula.z, 0f, GameTimer.Instance.TimeCache);
                 // -1 is yaw left, +1 is yaw right
-                // subject.ControlsRestricted.MakeRequest(pitch < 0f ? ControlType.PitchUp : ControlType.PitchDown, Mathf.Abs(pitch));
                 subject.ControlsRestricted.MakeRequest(ControlType.PitchDown, pitch);
-                // subject.ControlsRestricted.MakeRequest(yaw < 0f ? ControlType.YawLeft : ControlType.YawRight, Mathf.Abs(yaw));
                 subject.ControlsRestricted.MakeRequest(ControlType.YawRight, yaw);
                 __result += yaw;
-                // subject.ControlsRestricted.MakeRequest(roll < 0f ? ControlType.RollRight : ControlType.RollLeft, Mathf.Abs(roll));
                 subject.ControlsRestricted.MakeRequest(ControlType.RollLeft, roll);
 
                 // Test WASD

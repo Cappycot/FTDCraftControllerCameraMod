@@ -76,6 +76,10 @@
   <ItemGroup>
     <Compile Include="CameraModeHooks.cs" />
     <Compile Include="ChairHooks.cs" />
+    <Compile Include="VehicleCameraShipUpright.cs" />
+    <Compile Include="VehicleMatch.cs" />
+    <Compile Include="IVehicleCamera.cs" />
+    <Compile Include="IVehicleController.cs" />
     <Compile Include="ItemHooks.cs" />
     <Compile Include="InputHooks.cs" />
     <Compile Include="ControllerHooks.cs" />
