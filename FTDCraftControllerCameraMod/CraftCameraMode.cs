@@ -1,8 +1,10 @@
-﻿using BrilliantSkies.Effects.Cameras;
+﻿using BrilliantSkies.Ai;
+using BrilliantSkies.Ai.Modules.Manoeuvre;
+using BrilliantSkies.Effects.Cameras;
 using BrilliantSkies.Ftd.Avatar;
+using BrilliantSkies.Ftd.Avatar.Control;
 using BrilliantSkies.Ftd.Avatar.Movement;
 using BrilliantSkies.Ftd.Cameras;
-using BrilliantSkies.PlayerProfiles;
 using UnityEngine;
 
 namespace FTDCraftControllerCameraMod
@@ -30,10 +32,10 @@ namespace FTDCraftControllerCameraMod
         private cCameraControl ccc;
         private I_cMovement_HUD hud;
         private I_world_cMovement movement;
-        public EnumCraftCameraType CameraType { get; private set; } = 0;
+        public IVehicleCamera vehicleCamera;
+        public IVehicleController vehicleController;
         public MouseLook MouseLook { get; private set; }
         public MainConstruct Subject { get; private set; }
-        public HybridZoom Zoom { get; private set; }
 
         public CraftCameraMode(cCameraControl cCameraControl, I_cMovement_HUD iHUD, MainConstruct mainConstruct)
         {
@@ -41,10 +43,9 @@ namespace FTDCraftControllerCameraMod
             hud = iHUD;
             movement = ClientInterface.GetInterface().Get_I_world_cMovement();
             Subject = mainConstruct;
-            Zoom = HybridZoom.Exponential(1.5f, 1f, 10f, 0.5f, 0.1f, 5f);
         }
 
-        /// <summary>
+        /*// <summary>
         /// General camera positioning for all vehicles
         /// that pitch up and down for altitude and
         /// may roll to turn or strafe.
@@ -76,7 +77,7 @@ namespace FTDCraftControllerCameraMod
             spaceToMassHeight = Mathf.Min(spaceToMassHeight, height * 2f - spaceToMassHeight);
             // therefore height = centerMassToSpaceHeight + min spaceToMassHeight
             // need CoM + spaceToMassHeight + height * Transform.up*/
-        }
+        /*}
 
         /// <summary>
         /// General camera positioning for all vehicles
@@ -111,11 +112,11 @@ namespace FTDCraftControllerCameraMod
             Vector3 nforward = Vector3.Normalize(new Vector3(sTransform.forward.x, 0f, sTransform.forward.z));
             Vector3 nright = Vector3.Cross(Vector3.up, nforward);
             Transform.position = pos + (fb * nforward) + (lr * nright) + (ud * Vector3.up);
-        }
+        }*/
 
         public void UpdatePosition()
         {
-            switch (CameraType)
+            /*switch (CameraType)
             {
                 case EnumCraftCameraType.AIR_DEFAULT:
                     UpdatePositionAir();
@@ -123,7 +124,83 @@ namespace FTDCraftControllerCameraMod
                 default:
                     UpdatePositionShip();
                     break;
+            }*/
+            if (vehicleCamera != null)
+                Transform.position = vehicleCamera.GetCameraPosition(this);
+        }
+
+        public void GuessConstructCameraAndControl()
+        {
+            // Try guessing based on the controller block being used.
+            // DIRTY HACK - The type cast *should* succeed, but what if it somehow doesn't?
+            ConstructableController controller = (ClientInterface.GetInterface().Get_I_world_cControl() as cControl)?.GetControlModule().ActiveController;
+            // Try guessing based on AI movement type.
+            BlockStore<AIMainframe> ais = Subject.iBlockTypeStorage.MainframeStore;
+            AiMaster theAI = null;
+            IManoeuvre movement = null;
+            for (int i = 0; i < ais.Count; i++)
+            {
+                AiMaster ai = ais.Blocks[i].Node.Master;
+                if ((movement == null || theAI == null || ai.Priority > theAI.Priority) && ai.Pack.GetSelectedManoeuvre(out IManoeuvre tempMovement))
+                {
+                    theAI = ai;
+                    movement = tempMovement;
+                }
             }
+            // Get best possible camera mode.
+            IVehicleCamera possibleCamera = vehicleCamera ?? new VehicleCameraDefault();
+            VehicleMatch vehicleMatch = VehicleMatch.DEFAULT;
+            foreach (IVehicleCamera vc in Main.vehicleCameras)
+            {
+                VehicleMatch vm = vc.GetVehicleMatch(this, controller, theAI, movement);
+                switch (vm)
+                {
+                    case VehicleMatch.NO: // Not a match.
+                        break;
+                    case VehicleMatch.MAYBE: // Possible match found. The first MAYBE gets the pick.
+                        possibleCamera = vehicleMatch != VehicleMatch.MAYBE ? vc : possibleCamera;
+                        vehicleMatch = VehicleMatch.MAYBE;
+                        break;
+                    case VehicleMatch.YES: // Definite match found. The first YES gets the pick.
+                        vehicleMatch = VehicleMatch.YES;
+                        possibleCamera = vc;
+                        break;
+                    default: // VehicleMatch.DEFAULT
+                        possibleCamera = vehicleMatch == VehicleMatch.DEFAULT ? vc : possibleCamera;
+                        break;
+                }
+                if (vehicleMatch == VehicleMatch.YES)
+                    break;
+            }
+            vehicleCamera = possibleCamera;
+
+            // Get best possible controller mode.
+            // TODO: Make a generic matchable interface.
+            vehicleMatch = VehicleMatch.DEFAULT;
+            IVehicleController possibleController = vehicleController;
+            foreach (IVehicleController vc in Main.vehicleControllers)
+            {
+                VehicleMatch vm = vc.GetVehicleMatch(this, controller, theAI, movement);
+                switch (vm)
+                {
+                    case VehicleMatch.NO: // Not a match.
+                        break;
+                    case VehicleMatch.MAYBE: // Possible match found. The first MAYBE gets the pick.
+                        possibleController = vehicleMatch != VehicleMatch.MAYBE ? vc : possibleController;
+                        vehicleMatch = VehicleMatch.MAYBE;
+                        break;
+                    case VehicleMatch.YES: // Definite match found. The first YES gets the pick.
+                        vehicleMatch = VehicleMatch.YES;
+                        possibleController = vc;
+                        break;
+                    default: // VehicleMatch.DEFAULT
+                        possibleController = vehicleMatch == VehicleMatch.DEFAULT ? vc : possibleController;
+                        break;
+                }
+                if (vehicleMatch == VehicleMatch.YES)
+                    break;
+            }
+            vehicleController = possibleController;
         }
 
         public void Enter(ICameraMode previousMode)
@@ -138,10 +215,12 @@ namespace FTDCraftControllerCameraMod
                 // Start transform where the camera was.
                 // CameraManager.GetSingleton().MatchTransformToCurrentMode(Transform);
                 // Start transform at vehicle's forward rotation.
-                Transform.rotation = Quaternion.Euler(0f, Subject.myTransform.eulerAngles.y, 0f);
+                float yAngle = Subject.myTransform.eulerAngles.y;
+                // We cannot allow (0, 0, 0) due to weird rendering issues.
+                Transform.rotation = Quaternion.Euler(yAngle == 0f ? 0.1f : 0f, Subject.myTransform.eulerAngles.y, 0f);
                 // Transform.SetRotationWithoutRoll();
                 MouseLook.Match();
-                Reenter();
+                Reenter(true);
             }
         }
 
@@ -156,13 +235,29 @@ namespace FTDCraftControllerCameraMod
         /// Since we only update this camera's position while active,
         /// we need to call UpdatePosition() again to accommodate transitions.
         /// </summary>
-        public void Reenter()
+        public void Reenter(bool firstEntry)
         {
-            CameraType = CraftCameraType.GuessConstructCameraType(Subject);
+            // CameraType = CraftCameraType.GuessConstructCameraType(Subject);
             CameraManager.GetSingleton().CancelExternalCameraFocus();
             hud.SetCameraState(enumCameraState.unparented);
             MouseLook.enabled = true;
+            GuessConstructCameraAndControl();
+            if (firstEntry)
+            {
+                vehicleCamera.Enter();
+                vehicleController?.Enter(); // TODO: Should we make this non-null?
+            }
+            else
+            {
+                vehicleCamera.Reenter();
+                vehicleController?.Reenter();
+            }
             UpdatePosition();
+        }
+
+        public void Reenter()
+        {
+            Reenter(false);
         }
 
         public void Supersede(ICameraMode nextMode)

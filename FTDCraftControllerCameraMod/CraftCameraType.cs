@@ -15,6 +15,7 @@ namespace FTDCraftControllerCameraMod
         AIR_UPRIGHT,
         // LAND: Center origin at COS and
         // set height to top of craft.
+        LAND_DEFAULT,
         // SHIP: Center origin at COS and
         // set height to twice the height difference
         // between the COM and bottom of craft

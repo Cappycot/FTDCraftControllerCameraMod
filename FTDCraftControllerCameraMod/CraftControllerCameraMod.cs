@@ -20,9 +20,13 @@ namespace FTDCraftControllerCameraMod
 
         public void OnLoad()
         {
-            // TODO: Register all default vehicle cameras and controllers.
             Harmony harmony = new Harmony("cappycot.craftcontrollercamera");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+            // TODO: Make and register all default vehicle cameras and controllers.
+            vehicleCameras.Add(new VehicleCameraShipUpright());
+            vehicleCameras.Add(new VehicleCameraAirDefault());
+            vehicleControllers.Add(new VehicleControllerAircraft());
+            vehicleControllers.Add(new VehicleControllerHoverFront());
             AdvLogger.LogInfo("Craft Controller Camera is loaded.");
         }
 

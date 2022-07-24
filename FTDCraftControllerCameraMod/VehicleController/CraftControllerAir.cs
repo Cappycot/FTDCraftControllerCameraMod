@@ -22,12 +22,13 @@ namespace FTDCraftControllerCameraMod
         private static float last_hover_height = 0f;
         private static bool last_hover_save = false;
 
-        [HarmonyPatch("AirStuff")]
-        [HarmonyPostfix]
+        //[HarmonyPatch("AirStuff")]
+        //[HarmonyPostfix]
         public static void CameraAirControl(ConstructableController __instance, ref float __result)
         {
             if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode
-                && Main.craftCameraMode.CameraType == EnumCraftCameraType.AIR_DEFAULT
+                // && Main.craftCameraMode.CameraType == EnumCraftCameraType.AIR_DEFAULT
+                && Main.craftCameraMode.vehicleCamera is VehicleCameraAirDefault
                 // && Main.airControlSubject == Main.craftCameraMode.Subject
                 && Main.craftCameraMode.Subject == __instance.MainConstruct)
             {

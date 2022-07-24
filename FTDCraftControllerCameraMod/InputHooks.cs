@@ -13,7 +13,7 @@ namespace FTDCraftControllerCameraMod
         public static void CheckForAirControl()
         {
             if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode
-                && Main.craftCameraMode.CameraType == EnumCraftCameraType.AIR_DEFAULT
+                // && Main.craftCameraMode.CameraType == EnumCraftCameraType.AIR_DEFAULT
                 && ProfileManager.Instance.GetModule<FtdKeyMap>().Bool(
                     KeyInputsFtd.Freeze, KeyInputEventType.Down))
             {

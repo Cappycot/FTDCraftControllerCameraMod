@@ -1,4 +1,5 @@
-﻿using BrilliantSkies.Ai.Modules.Manoeuvre;
+﻿using BrilliantSkies.Ai;
+using BrilliantSkies.Ai.Modules.Manoeuvre;
 using BrilliantSkies.Ai.Modules.Manoeuvre.Examples.Ftd;
 using BrilliantSkies.Ai.Modules.Manoeuvres;
 using BrilliantSkies.PlayerProfiles;
@@ -6,14 +7,25 @@ using UnityEngine;
 
 namespace FTDCraftControllerCameraMod
 {
+    /// <summary>
+    /// General camera positioning for all vehicles that remain upright under normal conditions.
+    /// </summary>
     public class VehicleCameraShipUpright : IVehicleCamera
     {
+        private HybridZoom zoom = HybridZoom.Exponential(1.5f, 1f, 10f, 0.5f, 0.1f, 5f);
+
+        public void Enter()
+        {
+            zoom = HybridZoom.Exponential(1.5f, 1f, 10f, 0.5f, 0.1f, 5f);
+        }
+
+        public void Reenter() { }
+
         public Vector3 GetCameraPosition(CraftCameraMode cameraMode)
         {
             MainConstruct subject = cameraMode.Subject;
             Transform cTransform = cameraMode.Transform;
             Transform sTransform = subject.myTransform;
-            HybridZoom zoom = cameraMode.Zoom;
             Vector3 angles = cTransform.eulerAngles - sTransform.eulerAngles;
 
             float length = subject.AllBasics.sz / 2f;
@@ -39,25 +51,29 @@ namespace FTDCraftControllerCameraMod
 
             Vector3 nforward = Vector3.Normalize(new Vector3(sTransform.forward.x, 0f, sTransform.forward.z));
             Vector3 nright = Vector3.Cross(Vector3.up, nforward);
-            // Transform.position = pos + (fb * nforward) + (lr * nright) + (ud * Vector3.up);
+            // cTransform.position = pos + (fb * nforward) + (lr * nright) + (ud * Vector3.up);
             return pos + (fb * nforward) + (lr * nright) + (ud * Vector3.up);
         }
 
-        public VehicleMatch GetVehicleControllerMatch(MainConstruct subject, AIMainframe mainframe, IManoeuvre movement)
+        public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController controller, AiMaster master, IManoeuvre movement)
         {
-            if (movement != null)
+            MainConstruct subject = cameraMode.Subject;
+            switch (movement)
             {
-                switch (movement)
-                {
-                    case FortressManoeuvre _:
-                    case FtdNavalAndLandManoeuvre _:
-                        return VehicleMatch.DEFAULT;
-                    case ManoeuvreHover mh:
-                        return mh.PitchForForward > 0f || mh.RollForStrafe > 0f
-                            ? VehicleMatch.NO : VehicleMatch.DEFAULT;
-                    default:
-                        return VehicleMatch.NO;
-                }
+                case FortressManoeuvre _:
+                case FtdNavalAndLandManoeuvre _:
+                    return VehicleMatch.DEFAULT;
+                case ManoeuvreAirplane _:
+                case FtdAerialMovement _:
+                    return VehicleMatch.NO;
+                case ManoeuvreHover mh:
+                    return mh.PitchForForward > 0f || mh.RollForStrafe > 0f
+                        ? VehicleMatch.NO : VehicleMatch.DEFAULT;
+                // The following cases should be determined by travel restrictions...
+                // case ManoeuvreSixAxis _:
+                // case ManoeuvreDefault _:
+                default:
+                    break;
             }
             return subject.GetForce().TravelRestrictions == ForceTravelRestrictions.Air
                 ? VehicleMatch.NO : VehicleMatch.DEFAULT;
