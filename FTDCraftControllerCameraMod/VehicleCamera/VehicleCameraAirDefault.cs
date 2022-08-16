@@ -53,26 +53,11 @@ namespace FTDCraftControllerCameraMod
             spaceToMassHeight = Mathf.Min(spaceToMassHeight, height * 2f - spaceToMassHeight);
             // therefore height = centerMassToSpaceHeight + min spaceToMassHeight
             // need CoM + spaceToMassHeight + height * Transform.up*/
-}
+        }
 
-public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController controller, AiMaster master, IManoeuvre movement)
+        public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController controller, AiMaster master, IManoeuvre movement)
         {
             MainConstruct subject = cameraMode.Subject;
-            if (controller != null)
-            {
-                switch (controller.Data.Type.Us)
-                {
-                    case enumConstructableControllerModes.fortress:
-                    case enumConstructableControllerModes.waterSimple:
-                        return VehicleMatch.NO;
-                    // The following cases seems to be inconclusive based on KoTL designs...
-                    // case enumConstructableControllerModes.air:
-                    // case enumConstructableControllerModes.spinblock:
-                    // case enumConstructableControllerModes.thruster:
-                    default:
-                        break;
-                }
-            }
             if (movement != null)
             {
                 switch (movement)
@@ -89,6 +74,21 @@ public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableCon
                     // The following cases should be determined by travel restrictions...
                     // case ManoeuvreSixAxis _:
                     // case ManoeuvreDefault _:
+                    default:
+                        break;
+                }
+            }
+            if (controller != null)
+            {
+                switch (controller.Data.Type.Us)
+                {
+                    case enumConstructableControllerModes.fortress:
+                    case enumConstructableControllerModes.waterSimple:
+                        return VehicleMatch.NO;
+                    // The following cases seems to be inconclusive based on KoTL designs...
+                    // case enumConstructableControllerModes.air:
+                    // case enumConstructableControllerModes.spinblock:
+                    // case enumConstructableControllerModes.thruster:
                     default:
                         break;
                 }

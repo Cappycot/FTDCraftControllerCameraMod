@@ -151,7 +151,7 @@ namespace FTDCraftControllerCameraMod
             if (hover_test)
                 vector3.x = NormalizeAngle(vector3.x);
             else
-                vector3.x = NormalizeAngle(vector3.x, PITCH_UP_TO, PITCH_DOWN_TO); // TODO: Determine how to pick these numbers.
+                vector3.x = NormalizeAngle(vector3.x, PITCH_UP_TO, PITCH_DOWN_TO);
             vector3.y = NormalizeAngle(vector3.y);
             vector3.z = NormalizeAngle(vector3.z);
             return vector3;

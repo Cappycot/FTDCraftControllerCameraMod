@@ -1,5 +1,8 @@
 ﻿using BrilliantSkies.Ai;
 using BrilliantSkies.Ai.Control.Pids;
+using BrilliantSkies.Ai.Modules.Behaviour;
+using BrilliantSkies.Ai.Modules.Behaviour.Examples;
+using BrilliantSkies.Ai.Modules.Behaviour.Examples.Ftd;
 using BrilliantSkies.Ai.Modules.Manoeuvre;
 using BrilliantSkies.Ai.Modules.Manoeuvre.Examples.Ftd;
 using BrilliantSkies.Common.Controls.ConstructModules;
@@ -11,9 +14,9 @@ namespace FTDCraftControllerCameraMod
 {
     public class VehicleControllerAircraft : IVehicleController
     {
-        public static readonly float PITCH_UP_TO = -315f;
-        public static readonly float PITCH_DOWN_TO = 45f;
-        public static readonly float FOCUS_DISTANCE = 500f;
+        // public static readonly float PITCH_UP_TO = -315f;
+        // public static readonly float PITCH_DOWN_TO = 45f;
+        // public static readonly float FOCUS_DISTANCE = 500f;
         public static readonly Quaternion FORWARD_TO_UP = Quaternion.FromToRotation(Vector3.forward, Vector3.up);
 
         public void ControlVehicle(CraftCameraMode cameraMode, ConstructableController constructableController, AiMaster master, IManoeuvre movement, ref float result)
@@ -23,7 +26,7 @@ namespace FTDCraftControllerCameraMod
                 float gameTime = GameTimer.Instance.TimeCache;
                 float rollDeadzone = Mathf.Max(1f, ma.BankingTurnAbove.Us);
                 MainConstruct subject = cameraMode.Subject;
-                Vector3 wasd_dir = ProfileManager.Instance.GetModule<FtdKeyMap>().GetMovementDirection(true);
+                Vector3 wasd_dir = ProfileManager.Instance.GetModule<FtdKeyMap>().GetMovementDirection(false);
 
                 // TODO: Are these PIDs even okay in multiplayer?
                 subject.ControlsRestricted.PlayerControllingNow();
@@ -33,38 +36,46 @@ namespace FTDCraftControllerCameraMod
 
                 // Get camera focus from transform.
                 Transform cTransform = Main.craftCameraMode.Transform;
-                Vector3 focusPoint = cTransform.position + FOCUS_DISTANCE * cTransform.forward;
+                // Vector3 focusPoint = cTransform.position + FOCUS_DISTANCE * cTransform.forward;
+                Vector3 focusPoint = cTransform.position + ma.WanderDistance.Us * cTransform.forward;
 
                 // Calculate pitch, yaw, roll for vehicle to camera.
                 Transform sTransform = subject.myTransform;
+                Vector3 sAngles = VehicleUtils.NormalizeAngles(sTransform.eulerAngles);
                 Vector3 dir = Vector3.Normalize(focusPoint - subject.CentreOfMass);
                 Quaternion cameraRotation = Quaternion.LookRotation(dir, Vector3.up);
                 Quaternion goalRotation = Quaternion.Inverse(sTransform.rotation) * cameraRotation;
                 Quaternion rollRotation = Quaternion.Inverse(sTransform.rotation
                     * FORWARD_TO_UP) * cameraRotation;
                 Vector3 goalEula = goalRotation.eulerAngles;
-                goalEula = NormalizeAngles(goalEula);
+                // goalEula.x = VehicleUtils.NormalizeAngle(goalEula.x, PITCH_UP_TO, PITCH_DOWN_TO);
+                float alt_pitch = ma is ManoeuvreAirplane ? ma.PitchForAltitude.Us : 45f;
+                goalEula.x = VehicleUtils.NormalizeAngle(goalEula.x, alt_pitch - 360f, alt_pitch);
+                goalEula.y = VehicleUtils.NormalizeAngle(goalEula.y);
+                goalEula.z = VehicleUtils.NormalizeAngle(goalEula.z);
 
                 // Calculate roll to pitch turn.
                 float rollLimit = Mathf.Max(Mathf.Abs(Mathf.Sin(Mathf.Deg2Rad * goalEula.y) * 90f),
                     Mathf.Abs(Mathf.Sin(Mathf.Deg2Rad * goalEula.x) * 90f));
-                float rollTest = NormalizeAngle(-rollRotation.eulerAngles.y);
+                float rollTest = VehicleUtils.NormalizeAngle(-rollRotation.eulerAngles.y);
                 rollTest = Mathf.Clamp(rollTest, -rollLimit, rollLimit);
                 if (Mathf.Abs(goalEula.y) > rollDeadzone
                     || Mathf.Abs(goalEula.x) > rollDeadzone) // Needed to complete the pitch to yaw sequence.
                     goalEula.z = rollTest;
 
                 // Use AI PID to control.
-                float yaw = yawControl.NewMeasurement(goalEula.y, 0f, gameTime);
-                float pitch = pitchControl.NewMeasurement(goalEula.x, 0f, gameTime);
-                float roll = rollControl.NewMeasurement(goalEula.z, 0f, gameTime);
+                // float yaw = yawControl.NewMeasurement(goalEula.y, 0f, gameTime);
+                float yaw = yawControl.NewMeasurement(goalEula.y + sAngles.y, sAngles.y, gameTime);
+                // float pitch = pitchControl.NewMeasurement(goalEula.x, 0f, gameTime);
+                float pitch = pitchControl.NewMeasurement(goalEula.x + sAngles.x, sAngles.x, gameTime);
+                // float roll = rollControl.NewMeasurement(goalEula.z, 0f, gameTime);
+                float roll = rollControl.NewMeasurement(goalEula.z + sAngles.z, sAngles.z, gameTime);
                 // -1 is yaw left, +1 is yaw right
                 subject.ControlsRestricted.MakeRequest(ControlType.PitchDown, pitch);
                 subject.ControlsRestricted.MakeRequest(ControlType.YawRight, yaw);
                 result += yaw;
                 subject.ControlsRestricted.MakeRequest(ControlType.RollLeft, roll);
 
-                // TODO: Temp WASD controls.
                 subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight, wasd_dir.x);
                 subject.ControlsRestricted.MakeRequest(ControlType.HoverUp, wasd_dir.y);
                 subject.ControlsRestricted.MakeRequest(ControlType.PrimaryIncrease, wasd_dir.z);
@@ -73,38 +84,39 @@ namespace FTDCraftControllerCameraMod
 
         public void Enter() { }
 
-        public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController constructableController, AiMaster master, IManoeuvre movement)
+        public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController constructableController, AiMaster aiMaster, IManoeuvre movement)
         {
+            float turn_roll;
             switch (movement)
             {
-                case ManoeuvreAirplane _:
-                case FtdAerialMovement _:
-                    return VehicleMatch.DEFAULT;
+                case ManoeuvreAirplane ma:
+                    turn_roll = ma.BankingTurnRoll.Us;
+                    break;
+                case FtdAerialMovement fam:
+                    turn_roll = fam.RollToExtremeAngle.Us;
+                    break;
                 default:
                     return VehicleMatch.NO;
             }
+            aiMaster.Pack.GetSelectedBehaviour(out IBehaviour behavior);
+            switch (behavior)
+            {
+                case BehaviourCharge _:
+                case BehaviourBombingRun _:
+                case FtdAerial _:
+                    return turn_roll > 0f ? VehicleMatch.DEFAULT : VehicleMatch.NO;
+                default:
+                    return VehicleMatch.NO;
+            }
+            // Check if the craft is a submarine.
+            // SURELY all submarines stay upright :Clueless:
+            // This is literally the only reason why we might see aircraft AIs on upright watercraft.
+            /*float min_alt = aiMaster.Adjustments.MinimumAltitudeAboveWater.Us;
+            float max_alt = aiMaster.Adjustments.MaximumAltitude.Us;
+            return min_alt < 0f && Mathf.Abs(min_alt) > max_alt
+                && turn_roll > 0f ? VehicleMatch.NO : VehicleMatch.DEFAULT;*/
         }
 
         public void Reenter() { }
-
-        // TODO: Maybe move to utils class.
-        private static Vector3 NormalizeAngles(Vector3 vector3)
-        {
-            vector3.x = NormalizeAngle(vector3.x);
-            vector3.y = NormalizeAngle(vector3.y);
-            vector3.z = NormalizeAngle(vector3.z);
-            return vector3;
-        }
-
-        // TODO: Move to utils class.
-        private static float NormalizeAngle(float angle, float min = -180f, float max = 180f)
-        {
-            angle %= 360f;
-            if (angle < min)
-                angle += 360f;
-            else if (angle > max)
-                angle -= 360f;
-            return angle;
-        }
     }
 }

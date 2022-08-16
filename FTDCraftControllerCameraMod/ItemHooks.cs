@@ -2,7 +2,6 @@
 using BrilliantSkies.Ftd.Avatar.Items;
 using BrilliantSkies.PlayerProfiles;
 using HarmonyLib;
-using System;
 
 namespace FTDCraftControllerCameraMod
 {

@@ -13,7 +13,6 @@ namespace FTDCraftControllerCameraMod
         public Version version { get; } = new Version(1, 0, 0);
 
         public static CraftCameraMode craftCameraMode = null;
-        // public static MainConstruct airControlSubject = null; // TODO: Find a key to toggle this.
 
         public static HashSet<IVehicleCamera> vehicleCameras = new HashSet<IVehicleCamera>();
         public static HashSet<IVehicleController> vehicleControllers = new HashSet<IVehicleController>();
@@ -26,7 +25,10 @@ namespace FTDCraftControllerCameraMod
             vehicleCameras.Add(new VehicleCameraShipUpright());
             vehicleCameras.Add(new VehicleCameraAirDefault());
             vehicleControllers.Add(new VehicleControllerAircraft());
-            vehicleControllers.Add(new VehicleControllerHoverFront());
+            vehicleControllers.Add(new VehicleControllerAircraftUpright());
+            vehicleControllers.Add(new VehicleControllerFortress());
+            vehicleControllers.Add(new VehicleControllerHelicopter());
+            vehicleControllers.Add(new VehicleControllerShipUpright());
             AdvLogger.LogInfo("Craft Controller Camera is loaded.");
         }
 

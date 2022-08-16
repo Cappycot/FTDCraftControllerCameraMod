@@ -47,7 +47,9 @@ namespace FTDCraftControllerCameraMod
                 + sTransform.rotation * (subject.AllBasics.GetCentreOfUsedSpace() - height * Vector3.up);
             float spaceToMassHeight = (Quaternion.Inverse(sTransform.rotation) * (subject.CentreOfMass - pos)).y;
             spaceToMassHeight = Mathf.Min(spaceToMassHeight, height * 2f - spaceToMassHeight);
-            float ud = spaceToMassHeight * 2f + height * (currentZoom - 1f) * 2f;
+            // float ud = spaceToMassHeight * 2f + height * (currentZoom - 1f) * 2f;
+            // float ud = spaceToMassHeight * 2f + spaceToMassHeight * 2f * (currentZoom - 1f) * 2f;
+            float ud = spaceToMassHeight * 2f * (currentZoom * 2f - 1f);
 
             Vector3 nforward = Vector3.Normalize(new Vector3(sTransform.forward.x, 0f, sTransform.forward.z));
             Vector3 nright = Vector3.Cross(Vector3.up, nforward);
@@ -55,7 +57,7 @@ namespace FTDCraftControllerCameraMod
             return pos + (fb * nforward) + (lr * nright) + (ud * Vector3.up);
         }
 
-        public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController controller, AiMaster master, IManoeuvre movement)
+        public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController controller, AiMaster aiMaster, IManoeuvre movement)
         {
             MainConstruct subject = cameraMode.Subject;
             switch (movement)
@@ -65,12 +67,20 @@ namespace FTDCraftControllerCameraMod
                     return VehicleMatch.DEFAULT;
                 case ManoeuvreAirplane _:
                 case FtdAerialMovement _:
-                    return VehicleMatch.NO;
+                    // Check if the craft is a submarine.
+                    // SURELY all submarines stay upright :Clueless:
+                    // This is literally the only reason why we might see aircraft AIs on upright watercraft.
+                    float min_alt = aiMaster.Adjustments.MinimumAltitudeAboveWater.Us;
+                    float max_alt = aiMaster.Adjustments.MaximumAltitude.Us;
+                    return min_alt < 0f && Mathf.Abs(min_alt) > max_alt
+                        ? VehicleMatch.DEFAULT : VehicleMatch.NO;
                 case ManoeuvreHover mh:
+                    // TODO: Change to behavior/routine check since hover broadsiders should use this.
+                    // TODO: Check all possible behaviors and get the max allowed pitch/roll to target.
                     return mh.PitchForForward > 0f || mh.RollForStrafe > 0f
                         ? VehicleMatch.NO : VehicleMatch.DEFAULT;
-                // The following cases should be determined by travel restrictions...
                 // case ManoeuvreSixAxis _:
+                // The following cases should be determined by travel restrictions...
                 // case ManoeuvreDefault _:
                 default:
                     break;

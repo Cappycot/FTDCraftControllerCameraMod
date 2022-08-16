@@ -9,24 +9,30 @@ namespace FTDCraftControllerCameraMod
     [HarmonyPatch(typeof(ConstructableController))]
     public class ControllerHooks
     {
+        [HarmonyPatch("WaterSimpleStuff")]
+        [HarmonyPostfix]
+        public static void CameraWaterControl(ConstructableController __instance, ref float __result)
+        {
+            CraftControl(__instance, ref __result);
+        }
+
         [HarmonyPatch("AirStuff")]
         [HarmonyPostfix]
         public static void CameraAirControl(ConstructableController __instance, ref float __result)
         {
+            CraftControl(__instance, ref __result);
+        }
+
+        public static void CraftControl(ConstructableController constructableController, ref float result)
+        {
             CraftCameraMode ccm = Main.craftCameraMode;
             if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode
-                && ccm.Subject == __instance.MainConstruct)
+                && ccm.Subject == constructableController.MainConstruct)
             {
-                // TODO: Fix so movement of HIGHEST PRIORITY AI is selected.
-                BlockStore<AIMainframe> ais = ccm.Subject.iBlockTypeStorage.MainframeStore;
-                AiMaster master = null;
-                IManoeuvre movement = null;
-                for (int i = 0; i < ais.Count; i++)
-                    if ((master = ais.Blocks[i].Node.Master).Pack.GetSelectedManoeuvre(out movement))
-                        break;
+                AiMaster master = VehicleUtils.GetMovementAiFromMainConstruct(ccm.Subject, out IManoeuvre movement);
                 if (movement == null)
                     return;
-                Main.craftCameraMode.vehicleController?.ControlVehicle(ccm, __instance, master, movement, ref __result);
+                Main.craftCameraMode.vehicleController?.ControlVehicle(ccm, constructableController, master, movement, ref result);
             }
         }
     }

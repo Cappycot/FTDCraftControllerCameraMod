@@ -76,19 +76,22 @@
   <ItemGroup>
     <Compile Include="CameraModeHooks.cs" />
     <Compile Include="ChairHooks.cs" />
+    <Compile Include="VehicleController\VehicleControllerAircraftUpright.cs" />
+    <Compile Include="VehicleController\VehicleControllerFortress.cs" />
+    <Compile Include="VehicleController\VehicleControllerShipUpright.cs" />
+    <Compile Include="VehicleUtils.cs" />
     <Compile Include="VehicleCamera\VehicleCameraDefault.cs" />
     <Compile Include="VehicleCamera\VehicleCameraAirDefault.cs" />
     <Compile Include="VehicleCamera\VehicleCameraShipUpright.cs" />
     <Compile Include="VehicleController\VehicleControllerAircraft.cs" />
-    <Compile Include="VehicleController\VehicleControllerHoverFront.cs" />
+    <Compile Include="VehicleController\VehicleControllerHelicopter.cs" />
     <Compile Include="VehicleMatch.cs" />
     <Compile Include="VehicleCamera\IVehicleCamera.cs" />
     <Compile Include="VehicleController\IVehicleController.cs" />
     <Compile Include="ItemHooks.cs" />
-    <Compile Include="InputHooks.cs" />
     <Compile Include="ControllerHooks.cs" />
-    <Compile Include="VehicleController\CraftControllerAir.cs" />
-    <Compile Include="CraftCameraType.cs" />
+    <Compile Include="Legacy\CraftControllerAir.cs" />
+    <Compile Include="Legacy\CraftCameraType.cs" />
     <Compile Include="CraftCameraMode.cs" />
     <Compile Include="CraftControllerCameraMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
