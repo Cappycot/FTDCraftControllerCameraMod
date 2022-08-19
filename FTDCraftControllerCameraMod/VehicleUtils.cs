@@ -1,4 +1,7 @@
 ﻿using BrilliantSkies.Ai;
+using BrilliantSkies.Ai.Modules;
+using BrilliantSkies.Ai.Modules.Behaviour;
+using BrilliantSkies.Ai.Modules.Behaviour.Examples;
 using BrilliantSkies.Ai.Modules.Manoeuvre;
 using UnityEngine;
 
@@ -23,6 +26,42 @@ namespace FTDCraftControllerCameraMod
                 }
             }
             return aiMaster;
+        }
+
+        public static bool GetMaxPitchFromAiMaster(AiMaster aiMaster, ref float pitch)
+        {
+            bool changed = false;
+            for (int i = 0; i < aiMaster.Pack.Packages.Count; i++)
+            {
+                AiBaseAbstract aiBaseAbstract = aiMaster.Pack.Packages[i];
+                if (aiBaseAbstract.RoutineType == AiRoutineType.Behaviour)
+                {
+                    switch (aiBaseAbstract)
+                    {
+                        /*case BehaviourCircleAtDistance bcad:
+                            if (bcad.RollWithinAzi.Us > 0f && bcad.RollToTarget.Us > roll)
+                            {
+                                changed = true;
+                                roll = bcad.RollToTarget.Us;
+                            }
+                            break;*/
+                        case BehaviourPointAndMaintainDistance bpamd:
+                            if (bpamd.PitchWithinAzi.Us > 0f && bpamd.PitchToTarget.Us > pitch)
+                            {
+                                changed = true;
+                                pitch = bpamd.PitchToTarget.Us;
+                            }
+                            break;
+                        case BehaviourPointAndMaintainDistanceLegacy bpamdl:
+                            changed |= bpamdl.LookDirection.Us == LookOptions.AtThem;
+                            pitch = bpamdl.LookDirection.Us == LookOptions.AtThem ? 90f : pitch;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return changed;
         }
 
         public static Vector3 NormalizeAngles(Vector3 vector3)
