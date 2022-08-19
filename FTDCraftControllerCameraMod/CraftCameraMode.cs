@@ -6,6 +6,7 @@ using BrilliantSkies.Ftd.Avatar;
 using BrilliantSkies.Ftd.Avatar.Control;
 using BrilliantSkies.Ftd.Avatar.Movement;
 using BrilliantSkies.Ftd.Cameras;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FTDCraftControllerCameraMod
@@ -61,61 +62,14 @@ namespace FTDCraftControllerCameraMod
             AdvLogger.LogInfo(string.Format("Our movement is {0}.", movement?.GetType().Name ?? "none"), LogOptions.Hud);
 
             // Get best possible camera mode.
-            // TODO: Use the generic matchable interface.
-            IVehicleCamera possibleCamera = vehicleCamera ?? new VehicleCameraDefault();
-            VehicleMatch vehicleMatch = VehicleMatch.DEFAULT;
-            foreach (IVehicleCamera vc in Main.vehicleCameras)
-            {
-                VehicleMatch vm = vc.GetVehicleMatch(this, controller, aiMaster, movement);
-                switch (vm)
-                {
-                    case VehicleMatch.NO: // Not a match.
-                        break;
-                    case VehicleMatch.MAYBE: // Possible match found. The first MAYBE gets the pick.
-                        possibleCamera = vehicleMatch != VehicleMatch.MAYBE ? vc : possibleCamera;
-                        vehicleMatch = VehicleMatch.MAYBE;
-                        break;
-                    case VehicleMatch.YES: // Definite match found. The first YES gets the pick.
-                        vehicleMatch = VehicleMatch.YES;
-                        possibleCamera = vc;
-                        break;
-                    default: // VehicleMatch.DEFAULT
-                        possibleCamera = vehicleMatch == VehicleMatch.DEFAULT ? vc : possibleCamera;
-                        break;
-                }
-                if (vehicleMatch == VehicleMatch.YES)
-                    break;
-            }
-            vehicleCamera = possibleCamera;
+            vehicleCamera = (IVehicleCamera)VehicleMatchUtils.GetVehicleMatchable(
+                Main.vehicleCameras, this, controller, aiMaster, movement)
+                ?? new VehicleCameraDefault();
             AdvLogger.LogInfo(string.Format("Selected camera {0}.", vehicleCamera.GetType().Name), LogOptions.Hud);
 
             // Get best possible controller mode.
-            // TODO: Use the generic matchable interface.
-            vehicleMatch = VehicleMatch.DEFAULT;
-            IVehicleController possibleController = vehicleController;
-            foreach (IVehicleController vc in Main.vehicleControllers)
-            {
-                VehicleMatch vm = vc.GetVehicleMatch(this, controller, aiMaster, movement);
-                switch (vm)
-                {
-                    case VehicleMatch.NO: // Not a match.
-                        break;
-                    case VehicleMatch.MAYBE: // Possible match found. The first MAYBE gets the pick.
-                        possibleController = vehicleMatch != VehicleMatch.MAYBE ? vc : possibleController;
-                        vehicleMatch = VehicleMatch.MAYBE;
-                        break;
-                    case VehicleMatch.YES: // Definite match found. The first YES gets the pick.
-                        vehicleMatch = VehicleMatch.YES;
-                        possibleController = vc;
-                        break;
-                    default: // VehicleMatch.DEFAULT
-                        possibleController = vehicleMatch == VehicleMatch.DEFAULT ? vc : possibleController;
-                        break;
-                }
-                if (vehicleMatch == VehicleMatch.YES)
-                    break;
-            }
-            vehicleController = possibleController;
+            vehicleController = (IVehicleController)VehicleMatchUtils.GetVehicleMatchable(
+                Main.vehicleControllers,this, controller, aiMaster, movement);
             AdvLogger.LogInfo(string.Format("Selected controller {0}.", vehicleController?.GetType().Name ?? "none"), LogOptions.Hud);
         }
 
