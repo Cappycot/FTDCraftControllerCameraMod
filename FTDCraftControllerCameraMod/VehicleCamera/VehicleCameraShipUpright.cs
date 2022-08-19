@@ -49,7 +49,9 @@ namespace FTDCraftControllerCameraMod
             spaceToMassHeight = Mathf.Min(spaceToMassHeight, height * 2f - spaceToMassHeight);
             // float ud = spaceToMassHeight * 2f + height * (currentZoom - 1f) * 2f;
             // float ud = spaceToMassHeight * 2f + spaceToMassHeight * 2f * (currentZoom - 1f) * 2f;
-            float ud = spaceToMassHeight * 2f * (currentZoom * 2f - 1f);
+            float ud = spaceToMassHeight * 2f * (currentZoom * 2f - 1f)
+                // Keep camera above centerline.
+                + Mathf.Pow(Mathf.Sin(sTransform.eulerAngles.x * Mathf.Deg2Rad), 2f) * length;
 
             Vector3 nforward = Vector3.Normalize(new Vector3(sTransform.forward.x, 0f, sTransform.forward.z));
             Vector3 nright = Vector3.Cross(Vector3.up, nforward);
@@ -77,8 +79,9 @@ namespace FTDCraftControllerCameraMod
                 case ManoeuvreHover mh:
                     // TODO: Change to behavior/routine check since hover broadsiders should use this.
                     // TODO: Check all possible behaviors and get the max allowed pitch/roll to target.
-                    return mh.PitchForForward > 0f || mh.RollForStrafe > 0f
-                        ? VehicleMatch.NO : VehicleMatch.DEFAULT;
+                    float pitch = mh.PitchForForward.Us;
+                    VehicleUtils.GetMaxPitchFromAiMaster(aiMaster, ref pitch);
+                    return pitch > 0f ? VehicleMatch.NO : VehicleMatch.DEFAULT;
                 // case ManoeuvreSixAxis _:
                 // The following cases should be determined by travel restrictions...
                 // case ManoeuvreDefault _:

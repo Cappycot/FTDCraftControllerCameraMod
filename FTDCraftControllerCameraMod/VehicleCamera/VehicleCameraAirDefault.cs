@@ -55,7 +55,7 @@ namespace FTDCraftControllerCameraMod
             // need CoM + spaceToMassHeight + height * Transform.up*/
         }
 
-        public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController controller, AiMaster master, IManoeuvre movement)
+        public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController controller, AiMaster aiMaster, IManoeuvre movement)
         {
             MainConstruct subject = cameraMode.Subject;
             if (movement != null)
@@ -69,8 +69,10 @@ namespace FTDCraftControllerCameraMod
                     case FtdAerialMovement _:
                         return VehicleMatch.DEFAULT;
                     case ManoeuvreHover mh:
-                        return mh.PitchForForward > 0f || mh.RollForStrafe > 0f
-                            ? VehicleMatch.DEFAULT : VehicleMatch.NO;
+                        float pitch = mh.PitchForForward.Us;
+                        VehicleUtils.GetMaxPitchFromAiMaster(aiMaster, ref pitch);
+                        // TODO: Check pitch capability and AI behaviors.
+                        return pitch > 0f ? VehicleMatch.DEFAULT : VehicleMatch.NO;
                     // The following cases should be determined by travel restrictions...
                     // case ManoeuvreSixAxis _:
                     // case ManoeuvreDefault _:
