@@ -106,13 +106,6 @@ namespace FTDCraftControllerCameraMod
                 default:
                     return VehicleMatch.NO;
             }
-            // Check if the craft is a submarine.
-            // SURELY all submarines stay upright :Clueless:
-            // This is literally the only reason why we might see aircraft AIs on upright watercraft.
-            /*float min_alt = aiMaster.Adjustments.MinimumAltitudeAboveWater.Us;
-            float max_alt = aiMaster.Adjustments.MaximumAltitude.Us;
-            return min_alt < 0f && Mathf.Abs(min_alt) > max_alt
-                && turn_roll > 0f ? VehicleMatch.NO : VehicleMatch.DEFAULT;*/
         }
 
         public void Reenter() { }

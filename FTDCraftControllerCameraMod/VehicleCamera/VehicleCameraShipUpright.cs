@@ -77,8 +77,6 @@ namespace FTDCraftControllerCameraMod
                     return min_alt < 0f && Mathf.Abs(min_alt) > max_alt
                         ? VehicleMatch.DEFAULT : VehicleMatch.NO;
                 case ManoeuvreHover mh:
-                    // TODO: Change to behavior/routine check since hover broadsiders should use this.
-                    // TODO: Check all possible behaviors and get the max allowed pitch/roll to target.
                     float pitch = mh.PitchForForward.Us;
                     VehicleUtils.GetMaxPitchFromAiMaster(aiMaster, ref pitch);
                     return pitch > 0f ? VehicleMatch.NO : VehicleMatch.DEFAULT;

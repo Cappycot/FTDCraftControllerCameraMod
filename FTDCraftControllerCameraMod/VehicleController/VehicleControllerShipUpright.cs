@@ -121,11 +121,9 @@ namespace FTDCraftControllerCameraMod
                     {
                         AiBaseAbstract aiBaseAbstract = master.Pack.Packages[i];
                         if (aiBaseAbstract.RoutineType == AiRoutineType.Behaviour
-                            && (aiBaseAbstract is BehaviourBombingRun
-                            || aiBaseAbstract is BehaviourCharge
+                            && (aiBaseAbstract is BehaviourCharge
                             || aiBaseAbstract is BehaviourPointAndMaintainDistance
-                            || aiBaseAbstract is BehaviourPointAndMaintainDistanceLegacy
-                            || aiBaseAbstract is FtdAerial))
+                            || aiBaseAbstract is BehaviourPointAndMaintainDistanceLegacy))
                             return VehicleMatch.NO;
                     }
                     return VehicleMatch.DEFAULT;
