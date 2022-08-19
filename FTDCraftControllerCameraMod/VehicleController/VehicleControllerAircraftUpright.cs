@@ -104,7 +104,6 @@ namespace FTDCraftControllerCameraMod
                 VariableControllerMaster hoverControl = master.Common.HoverControl;
                 float alt_goal = hoverControl.NewMeasurement(last_hover_alt, current_alt, gameTime);
                 float hover = alt_goal * Mathf.Cos(roll_rads);
-                // TODO: Check that strafe command is correct.
                 subject.ControlsRestricted.MakeRequest(ControlType.HoverUp, hover);
                 subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight, alt_goal * Mathf.Sin(roll_rads));
                 if (hover_for_pitch)
@@ -118,31 +117,6 @@ namespace FTDCraftControllerCameraMod
                         -pitch_for_alt, pitch_for_alt);
                 }
             }
-
-            /*if (wasd_dir.y == 0f && last_hover_save)
-            {
-                VariableControllerMaster hoverControl = master.Common.HoverControl;
-                float alt_goal = hoverControl.NewMeasurement(last_hover_alt, current_alt, gameTime);
-                float hover = alt_goal * Mathf.Cos(roll_rads);
-                subject.ControlsRestricted.MakeRequest(ControlType.HoverUp, hover);
-                subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight, alt_goal * Mathf.Sin(roll_rads));
-                if (hover_for_pitch)
-                    pitch_dir = -Mathf.Clamp(hover * pitch_for_alt,
-                        -pitch_for_alt, pitch_for_alt);
-                else if (sTransform.forward.x != 0f || sTransform.forward.z != 0f)
-                {
-                    Vector3 pitch_focus = Vector3.Normalize(new Vector3(sTransform.forward.x, 0f, sTransform.forward.z)) * wander_distance;
-                    pitch_focus.y = last_hover_alt - current_alt;
-                    pitch_dir = Mathf.Clamp(VehicleUtils.NormalizeAngle(Quaternion.LookRotation(Vector3.Normalize(pitch_focus)).eulerAngles.x),
-                        -pitch_for_alt, pitch_for_alt);
-                }
-            }
-            else
-            {
-                last_hover_alt = current_alt;
-                subject.ControlsRestricted.MakeRequest(ControlType.HoverUp, wasd_dir.y);
-                subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight, wasd_dir.y * Mathf.Sin(roll_rads));
-            }*/
 
             float pitch_goal = pitchControl.NewMeasurement(pitch_dir, sAngles.x, gameTime);
             float yaw_goal = yawControl.NewMeasurement(yaw_dir + sAngles.y, sAngles.y, gameTime);
@@ -181,27 +155,10 @@ namespace FTDCraftControllerCameraMod
                 case BehaviourCharge _:
                 case BehaviourBombingRun _:
                 case FtdAerial _:
-                    return turn_roll > 0f ? VehicleMatch.NO : VehicleMatch.DEFAULT;
+                    return turn_roll >= VehicleControllerAircraft.ROLL_REQUIRED ? VehicleMatch.NO : VehicleMatch.DEFAULT;
                 default:
                     return VehicleMatch.DEFAULT;
             }
-            /*switch (movement)
-            {
-                case ManoeuvreAirplane _:
-                case FtdAerialMovement _:
-                    aiMaster.Pack.GetSelectedBehaviour(out IBehaviour behavior);
-                    switch (behavior)
-                    {
-                        case BehaviourCharge _:
-                        case BehaviourBombingRun _:
-                        case FtdAerial _:
-                            return VehicleMatch.NO;
-                        default:
-                            return VehicleMatch.DEFAULT;
-                    }
-                default:
-                    return VehicleMatch.NO;
-            }*/
         }
 
         public void Reenter()

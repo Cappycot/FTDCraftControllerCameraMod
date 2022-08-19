@@ -14,9 +14,7 @@ namespace FTDCraftControllerCameraMod
 {
     public class VehicleControllerAircraft : IVehicleController
     {
-        // public static readonly float PITCH_UP_TO = -315f;
-        // public static readonly float PITCH_DOWN_TO = 45f;
-        // public static readonly float FOCUS_DISTANCE = 500f;
+        public static readonly float ROLL_REQUIRED = 45f;
         public static readonly Quaternion FORWARD_TO_UP = Quaternion.FromToRotation(Vector3.forward, Vector3.up);
 
         public void ControlVehicle(CraftCameraMode cameraMode, ConstructableController constructableController, AiMaster master, IManoeuvre movement, ref float result)
@@ -104,7 +102,7 @@ namespace FTDCraftControllerCameraMod
                 case BehaviourCharge _:
                 case BehaviourBombingRun _:
                 case FtdAerial _:
-                    return turn_roll > 0f ? VehicleMatch.DEFAULT : VehicleMatch.NO;
+                    return turn_roll >= ROLL_REQUIRED ? VehicleMatch.DEFAULT : VehicleMatch.NO;
                 default:
                     return VehicleMatch.NO;
             }
