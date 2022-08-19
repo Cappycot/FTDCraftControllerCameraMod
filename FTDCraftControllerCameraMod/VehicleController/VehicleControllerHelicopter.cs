@@ -62,8 +62,12 @@ namespace FTDCraftControllerCameraMod
                 // Use AI PID to control.
                 // float yaw = yawControl.NewMeasurement(goalEula.y, 0f, gameTime);
                 float yaw = yawControl.NewMeasurement(goalEula.y + sAngles.y, sAngles.y, gameTime);
+
                 // float pitch = pitchControl.NewMeasurement(goalEula.x, 0f, gameTime);
-                float pitch = pitchControl.NewMeasurement(goalEula.x + sAngles.x, sAngles.x, gameTime);
+                // float pitch = pitchControl.NewMeasurement(goalEula.x + sAngles.x, sAngles.x, gameTime);
+                // TODO: Keep craft from flipping itself when pointing down?
+                float pitch = pitchControl.NewMeasurement(Mathf.Clamp(goalEula.x + sAngles.x, -90f, 90f), sAngles.x, gameTime);
+
                 // float roll = rollControl.NewMeasurement(goalEula.z, 0f, gameTime);
                 float roll = rollControl.NewMeasurement(goalEula.z + sAngles.z, sAngles.z, gameTime);
                 // -1 is yaw left, +1 is yaw right
