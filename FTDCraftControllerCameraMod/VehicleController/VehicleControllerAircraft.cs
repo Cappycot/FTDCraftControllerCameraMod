@@ -7,6 +7,7 @@ using BrilliantSkies.Ai.Modules.Manoeuvre;
 using BrilliantSkies.Ai.Modules.Manoeuvre.Examples.Ftd;
 using BrilliantSkies.Common.Controls.ConstructModules;
 using BrilliantSkies.Core.Timing;
+using BrilliantSkies.Core.Widgets;
 using BrilliantSkies.PlayerProfiles;
 using UnityEngine;
 
@@ -14,8 +15,11 @@ namespace FTDCraftControllerCameraMod
 {
     public class VehicleControllerAircraft : IVehicleController
     {
+        public static readonly float PITCH_REQUIRED = 45f;
         public static readonly float ROLL_REQUIRED = 45f;
         public static readonly Quaternion FORWARD_TO_UP = Quaternion.FromToRotation(Vector3.forward, Vector3.up);
+
+        private readonly RealTimeUntil brake_timer = new RealTimeUntil();
 
         public void ControlVehicle(CraftCameraMode cameraMode, ConstructableController constructableController, AiMaster master, IManoeuvre movement, ref float result)
         {
@@ -24,7 +28,8 @@ namespace FTDCraftControllerCameraMod
                 float gameTime = GameTimer.Instance.TimeCache;
                 float rollDeadzone = Mathf.Max(1f, ma.BankingTurnAbove.Us);
                 MainConstruct subject = cameraMode.Subject;
-                Vector3 wasd_dir = ProfileManager.Instance.GetModule<FtdKeyMap>().GetMovementDirection(false);
+                FtdKeyMap key_map = ProfileManager.Instance.GetModule<FtdKeyMap>();
+                Vector3 wasd_dir = key_map.GetMovementDirection(false);
 
                 // TODO: Are these PIDs even okay in multiplayer?
                 subject.ControlsRestricted.PlayerControllingNow();
@@ -76,7 +81,16 @@ namespace FTDCraftControllerCameraMod
 
                 subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight, wasd_dir.x);
                 subject.ControlsRestricted.MakeRequest(ControlType.HoverUp, wasd_dir.y);
-                subject.ControlsRestricted.MakeRequest(ControlType.PrimaryIncrease, wasd_dir.z);
+
+                // Forward WS controls
+                if (key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held)
+                && key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held))
+                {
+                    subject.ControlsRestricted.StopDrive(Drive.Main);
+                    brake_timer.Now(ConstructableController.brakeTime);
+                }
+                else if (brake_timer.Happened)
+                    subject.ControlsRestricted.MakeRequest(ControlType.PrimaryIncrease, wasd_dir.z);
             }
         }
 
@@ -84,13 +98,16 @@ namespace FTDCraftControllerCameraMod
 
         public VehicleMatch GetVehicleMatch(CraftCameraMode cameraMode, ConstructableController constructableController, AiMaster aiMaster, IManoeuvre movement)
         {
+            float pitch_alt;
             float turn_roll;
             switch (movement)
             {
                 case ManoeuvreAirplane ma:
+                    pitch_alt = ma.PitchForAltitude.Us;
                     turn_roll = ma.BankingTurnRoll.Us;
                     break;
                 case FtdAerialMovement fam:
+                    pitch_alt = 90f;
                     turn_roll = fam.RollToExtremeAngle.Us;
                     break;
                 default:
@@ -102,12 +119,39 @@ namespace FTDCraftControllerCameraMod
                 case BehaviourCharge _:
                 case BehaviourBombingRun _:
                 case FtdAerial _:
-                    return turn_roll >= ROLL_REQUIRED ? VehicleMatch.DEFAULT : VehicleMatch.NO;
+                    return pitch_alt >= PITCH_REQUIRED && turn_roll >= ROLL_REQUIRED
+                        ? VehicleMatch.DEFAULT : VehicleMatch.NO;
                 default:
                     return VehicleMatch.NO;
             }
         }
 
         public void Reenter() { }
+
+        public bool KeyPressed(KeyInputsForVehicles key)
+        {
+            FtdKeyMap key_map = ProfileManager.Instance.GetModule<FtdKeyMap>();
+            switch (key)
+            {
+                // Throttle
+                case KeyInputsForVehicles.AirPrimaryUp:
+                case KeyInputsForVehicles.WaterPrimaryUp:
+                    return key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held);
+                case KeyInputsForVehicles.AirPrimaryDown:
+                case KeyInputsForVehicles.WaterPrimaryDown:
+                    return key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
+                case KeyInputsForVehicles.AirPrimaryZero:
+                case KeyInputsForVehicles.WaterPrimaryZero:
+                    return key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held)
+                        && key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
+                // Hover
+                case KeyInputsForVehicles.ComplexUpArrow:
+                    return key_map.Bool(KeyInputsFtd.MoveUp, KeyInputEventType.Held);
+                case KeyInputsForVehicles.ComplexDownArrow:
+                    return key_map.Bool(KeyInputsFtd.MoveDown, KeyInputEventType.Held);
+                default:
+                    return false;
+            }
+        }
     }
 }

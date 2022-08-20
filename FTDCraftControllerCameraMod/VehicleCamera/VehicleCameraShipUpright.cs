@@ -76,10 +76,9 @@ namespace FTDCraftControllerCameraMod
                     float max_alt = aiMaster.Adjustments.MaximumAltitude.Us;
                     return min_alt < 0f && Mathf.Abs(min_alt) > max_alt
                         ? VehicleMatch.DEFAULT : VehicleMatch.NO;
-                case ManoeuvreHover mh:
-                    float pitch = mh.PitchForForward.Us;
-                    VehicleUtils.GetMaxPitchFromAiMaster(aiMaster, ref pitch);
-                    return pitch > 0f ? VehicleMatch.NO : VehicleMatch.DEFAULT;
+                case ManoeuvreHover _:
+                    return VehicleUtils.GetMaxPitchFromAiMaster(aiMaster) > 0f
+                        ? VehicleMatch.NO : VehicleMatch.DEFAULT;
                 // case ManoeuvreSixAxis _:
                 // The following cases should be determined by travel restrictions...
                 // case ManoeuvreDefault _:

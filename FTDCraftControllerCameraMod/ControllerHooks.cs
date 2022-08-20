@@ -26,7 +26,7 @@ namespace FTDCraftControllerCameraMod
         public static void CraftControl(ConstructableController constructableController, ref float result)
         {
             CraftCameraMode ccm = Main.craftCameraMode;
-            if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode
+            if (CameraManager.GetSingleton().CurrentMode == ccm
                 && ccm.Subject == constructableController.MainConstruct)
             {
                 AiMaster master = VehicleUtils.GetMovementAiFromMainConstruct(ccm.Subject, out IManoeuvre movement);
@@ -34,6 +34,28 @@ namespace FTDCraftControllerCameraMod
                     return;
                 Main.craftCameraMode.vehicleController?.ControlVehicle(ccm, constructableController, master, movement, ref result);
             }
+        }
+    }
+
+    // TODO: Thruster balanced controller
+    [HarmonyPatch(typeof(ThrustController))]
+    public class ThrustControllerHooks
+    {
+
+    }
+
+    // I have no clue how this works.
+    [HarmonyPatch(typeof(KeyMap<KeyInputsForVehicles>))]
+    public class VehicleKeyMapHooks
+    {
+        [HarmonyPatch("Bool")]
+        [HarmonyPostfix]
+        public static void SimulateInput(KeyInputsForVehicles id, ref bool __result)
+        {
+            CraftCameraMode ccm = Main.craftCameraMode;
+            IVehicleController vc = ccm?.vehicleController;
+            if (CameraManager.GetSingleton().CurrentMode == ccm && vc != null)
+                __result |= vc.KeyPressed(id);
         }
     }
 

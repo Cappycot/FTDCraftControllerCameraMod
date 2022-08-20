@@ -3,11 +3,11 @@ using BrilliantSkies.Ai.Control.Pids;
 using BrilliantSkies.Ai.Modules;
 using BrilliantSkies.Ai.Modules.Behaviour;
 using BrilliantSkies.Ai.Modules.Behaviour.Examples;
-using BrilliantSkies.Ai.Modules.Behaviour.Examples.Ftd;
 using BrilliantSkies.Ai.Modules.Manoeuvre;
 using BrilliantSkies.Ai.Modules.Manoeuvre.Examples.Ftd;
 using BrilliantSkies.Common.Controls.ConstructModules;
 using BrilliantSkies.Core.Timing;
+using BrilliantSkies.Core.Widgets;
 using BrilliantSkies.Ftd.Terrain;
 using BrilliantSkies.PlayerProfiles;
 using UnityEngine;
@@ -19,6 +19,7 @@ namespace FTDCraftControllerCameraMod
     /// </summary>
     public class VehicleControllerShipUpright : IVehicleController
     {
+        private readonly RealTimeUntil brake_timer = new RealTimeUntil();
         private float last_hover_alt = 0f;
         private float lowest_hover_alt = 0f; // Craft will follow the terrain based on min height above land.
         private bool last_hover_save = false;
@@ -47,7 +48,8 @@ namespace FTDCraftControllerCameraMod
             Transform sTransform = subject.myTransform;
             Vector3 sPosition = subject.CentreOfMass;
             Vector3 sAngles = VehicleUtils.NormalizeAngles(sTransform.eulerAngles);
-            Vector3 wasd_dir = ProfileManager.Instance.GetModule<FtdKeyMap>().GetMovementDirection(false);
+            FtdKeyMap key_map = ProfileManager.Instance.GetModule<FtdKeyMap>();
+            Vector3 wasd_dir = key_map.GetMovementDirection(false);
 
             // TODO: Are these PIDs even okay in multiplayer?
             subject.ControlsRestricted.PlayerControllingNow();
@@ -55,6 +57,7 @@ namespace FTDCraftControllerCameraMod
             VariableControllerMaster pitchControl = master.Common.PitchControl;
             VariableControllerMaster yawControl = master.Common.YawControl;
             VariableControllerMaster hoverControl = master.Common.HoverControl;
+            VariableControllerMaster strafeControl = master.Common.StrafeControl;
             VariableControllerMaster forwardControl = master.Common.ForwardBackwardControl;
 
             float yaw = wasd_dir.x;
@@ -66,7 +69,7 @@ namespace FTDCraftControllerCameraMod
                 last_yaw_save = true;
             }
             subject.ControlsRestricted.MakeRequest(ControlType.YawRight, yaw);
-            result += wasd_dir.x;
+            result += yaw;
 
             if (use_pitch)
                 subject.ControlsRestricted.MakeRequest(ControlType.PitchDown,
@@ -74,15 +77,26 @@ namespace FTDCraftControllerCameraMod
             subject.ControlsRestricted.MakeRequest(ControlType.RollLeft,
                 rollControl.NewMeasurement(0f, sAngles.z, gameTime));
 
-            if (wasd_dir.z != 0f)
+            Vector3 normalVelocity = Quaternion.Inverse(sTransform.rotation) * subject.Velocity;
+
+            // Forward WS controls
+            if (key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held)
+                && key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held))
+            {
+                subject.ControlsRestricted.StopDrive(Drive.Main);
+                brake_timer.Now(ConstructableController.brakeTime);
+            }
+            if (wasd_dir.z != 0f && brake_timer.Happened)
                 subject.ControlsRestricted.MakeRequest(ControlType.PrimaryIncrease, wasd_dir.z);
             // Attempt to actively dampen forward speed if throttle ordered stop.
             else if (subject.ControlsRestricted.MainSpeed == 0f)
             {
-                Vector3 normalVelocity = Quaternion.Inverse(sTransform.rotation) * subject.Velocity;
                 subject.ControlsRestricted.MakeRequest(ControlType.ThrustForward,
                     forwardControl.NewMeasurement(0f, Vector3.Project(normalVelocity, Vector3.forward).z, gameTime));
             }
+            // Dampen strafe if applicable.
+            subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight, 
+                strafeControl.NewMeasurement(0f, Vector3.Project(normalVelocity, Vector3.right).x, gameTime));
 
             // Player controls hover iff use_hover is true, wasd_dir.y != 0f and current altitude is within AI adjustments.
             float min_alt = Mathf.Max(StaticTerrainAltitude.AltitudeForGameWorldPositionInMainFrame(sPosition)
@@ -116,11 +130,11 @@ namespace FTDCraftControllerCameraMod
             switch (movement)
             {
                 case ManoeuvreHover _:
-                    // ManoeuvreAbstract ma = (ManoeuvreAbstract) movement;
                     for (int i = 0; i < master.Pack.Packages.Count; i++)
                     {
                         AiBaseAbstract aiBaseAbstract = master.Pack.Packages[i];
                         if (aiBaseAbstract.RoutineType == AiRoutineType.Behaviour
+                            // List of frontsider behaviors.
                             && (aiBaseAbstract is BehaviourCharge
                             || aiBaseAbstract is BehaviourPointAndMaintainDistance
                             || aiBaseAbstract is BehaviourPointAndMaintainDistanceLegacy))
@@ -129,9 +143,6 @@ namespace FTDCraftControllerCameraMod
                     return VehicleMatch.DEFAULT;
                 case FtdNavalAndLandManoeuvre _:
                     return VehicleMatch.DEFAULT;
-                /*case ManoeuvreHover mh:
-                    return mh.PitchForForward > 0f || mh.RollForStrafe > 0f
-                        ? VehicleMatch.NO : VehicleMatch.DEFAULT;*/
                 default:
                     return VehicleMatch.NO;
             }
@@ -141,6 +152,39 @@ namespace FTDCraftControllerCameraMod
         {
             last_hover_save = false;
             last_yaw_save = false;
+        }
+
+        public bool KeyPressed(KeyInputsForVehicles key)
+        {
+            FtdKeyMap key_map = ProfileManager.Instance.GetModule<FtdKeyMap>();
+            switch (key)
+            {
+                // Yaw
+                case KeyInputsForVehicles.AirYawLeft:
+                case KeyInputsForVehicles.WaterYawLeft:
+                    return key_map.Bool(KeyInputsFtd.MoveLeft, KeyInputEventType.Held);
+                case KeyInputsForVehicles.AirYawRight:
+                case KeyInputsForVehicles.WaterYawRight:
+                    return key_map.Bool(KeyInputsFtd.MoveRight, KeyInputEventType.Held);
+                // Throttle
+                case KeyInputsForVehicles.AirPrimaryUp:
+                case KeyInputsForVehicles.WaterPrimaryUp:
+                    return key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held);
+                case KeyInputsForVehicles.AirPrimaryDown:
+                case KeyInputsForVehicles.WaterPrimaryDown:
+                    return key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
+                case KeyInputsForVehicles.AirPrimaryZero:
+                case KeyInputsForVehicles.WaterPrimaryZero:
+                    return key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held)
+                        && key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
+                // Hover
+                case KeyInputsForVehicles.ComplexUpArrow:
+                    return key_map.Bool(KeyInputsFtd.MoveUp, KeyInputEventType.Held);
+                case KeyInputsForVehicles.ComplexDownArrow:
+                    return key_map.Bool(KeyInputsFtd.MoveDown, KeyInputEventType.Held);
+                default:
+                    return false;
+            }
         }
     }
 }

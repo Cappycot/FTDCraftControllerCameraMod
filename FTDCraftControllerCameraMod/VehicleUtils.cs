@@ -28,9 +28,9 @@ namespace FTDCraftControllerCameraMod
             return aiMaster;
         }
 
-        public static bool GetMaxPitchFromAiMaster(AiMaster aiMaster, ref float pitch)
+        public static float GetMaxPitchFromAiMaster(AiMaster aiMaster)
         {
-            bool changed = false;
+            float pitch = 0f;
             for (int i = 0; i < aiMaster.Pack.Packages.Count; i++)
             {
                 AiBaseAbstract aiBaseAbstract = aiMaster.Pack.Packages[i];
@@ -38,22 +38,11 @@ namespace FTDCraftControllerCameraMod
                 {
                     switch (aiBaseAbstract)
                     {
-                        /*case BehaviourCircleAtDistance bcad:
-                            if (bcad.RollWithinAzi.Us > 0f && bcad.RollToTarget.Us > roll)
-                            {
-                                changed = true;
-                                roll = bcad.RollToTarget.Us;
-                            }
-                            break;*/
                         case BehaviourPointAndMaintainDistance bpamd:
                             if (bpamd.PitchWithinAzi.Us > 0f && bpamd.PitchToTarget.Us > pitch)
-                            {
-                                changed = true;
-                                pitch = bpamd.PitchToTarget.Us;
-                            }
+                                pitch = Mathf.Max(bpamd.PitchToTarget.Us, pitch);
                             break;
                         case BehaviourPointAndMaintainDistanceLegacy bpamdl:
-                            changed |= bpamdl.LookDirection.Us == LookOptions.AtThem;
                             pitch = bpamdl.LookDirection.Us == LookOptions.AtThem ? 90f : pitch;
                             break;
                         default:
@@ -61,7 +50,7 @@ namespace FTDCraftControllerCameraMod
                     }
                 }
             }
-            return changed;
+            return pitch;
         }
 
         public static Vector3 NormalizeAngles(Vector3 vector3)

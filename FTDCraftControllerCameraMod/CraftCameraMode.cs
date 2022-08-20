@@ -6,7 +6,6 @@ using BrilliantSkies.Ftd.Avatar;
 using BrilliantSkies.Ftd.Avatar.Control;
 using BrilliantSkies.Ftd.Avatar.Movement;
 using BrilliantSkies.Ftd.Cameras;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace FTDCraftControllerCameraMod

@@ -68,11 +68,9 @@ namespace FTDCraftControllerCameraMod
                     case ManoeuvreAirplane _:
                     case FtdAerialMovement _:
                         return VehicleMatch.DEFAULT;
-                    case ManoeuvreHover mh:
-                        float pitch = mh.PitchForForward.Us;
-                        VehicleUtils.GetMaxPitchFromAiMaster(aiMaster, ref pitch);
-                        // TODO: Check pitch capability and AI behaviors.
-                        return pitch > 0f ? VehicleMatch.DEFAULT : VehicleMatch.NO;
+                    case ManoeuvreHover _:
+                        return VehicleUtils.GetMaxPitchFromAiMaster(aiMaster) > 0f
+                            ? VehicleMatch.DEFAULT : VehicleMatch.NO;
                     // The following cases should be determined by travel restrictions...
                     // case ManoeuvreSixAxis _:
                     // case ManoeuvreDefault _:

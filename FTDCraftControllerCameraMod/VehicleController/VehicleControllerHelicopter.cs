@@ -3,7 +3,6 @@ using BrilliantSkies.Ai.Control.Pids;
 using BrilliantSkies.Ai.Modules;
 using BrilliantSkies.Ai.Modules.Behaviour;
 using BrilliantSkies.Ai.Modules.Behaviour.Examples;
-using BrilliantSkies.Ai.Modules.Behaviour.Examples.Ftd;
 using BrilliantSkies.Ai.Modules.Manoeuvre;
 using BrilliantSkies.Common.Controls.ConstructModules;
 using BrilliantSkies.Core.Timing;
@@ -23,7 +22,7 @@ namespace FTDCraftControllerCameraMod
         private float last_hover_alt = 0f;
         private bool last_hover_save = false;
 
-        public void ControlVehicle(CraftCameraMode cameraMode, ConstructableController constructableController, AiMaster master, IManoeuvre movement, ref float result)
+        public void ControlVehicle(CraftCameraMode cameraMode, ConstructableController constructableController, AiMaster aiMaster, IManoeuvre movement, ref float result)
         {
             if (movement is ManoeuvreAbstract ma)
             {
@@ -33,16 +32,20 @@ namespace FTDCraftControllerCameraMod
                 float current_alt = subject.CentreOfMass.y;
                 float pitchToThrust = ma.PitchForForward.Us;
                 float rollToStrafe = ma.RollForStrafe.Us;
-                Vector3 wasd_dir = ProfileManager.Instance.GetModule<FtdKeyMap>().GetMovementDirection(false);
+                FtdKeyMap key_map = ProfileManager.Instance.GetModule<FtdKeyMap>();
+                Vector3 wasd_dir = key_map.GetMovementDirection(false);
+                float max_look_pitch = key_map.Bool(KeyInputsFtd.SpeedUpCamera, KeyInputEventType.Held) ? 
+                    90f : VehicleUtils.GetMaxPitchFromAiMaster(aiMaster);
+                float max_pitch = Mathf.Min(max_look_pitch + pitchToThrust, 90f);
 
                 // TODO: Are these PIDs even okay in multiplayer?
                 subject.ControlsRestricted.PlayerControllingNow();
-                VariableControllerMaster yawControl = master.Common.YawControl;
-                VariableControllerMaster rollControl = master.Common.RollControl;
-                VariableControllerMaster pitchControl = master.Common.PitchControl;
-                VariableControllerMaster hoverControl = master.Common.HoverControl;
-                VariableControllerMaster strafeControl = master.Common.StrafeControl;
-                VariableControllerMaster forwardControl = master.Common.ForwardBackwardControl;
+                VariableControllerMaster yawControl = aiMaster.Common.YawControl;
+                VariableControllerMaster rollControl = aiMaster.Common.RollControl;
+                VariableControllerMaster pitchControl = aiMaster.Common.PitchControl;
+                VariableControllerMaster hoverControl = aiMaster.Common.HoverControl;
+                VariableControllerMaster strafeControl = aiMaster.Common.StrafeControl;
+                VariableControllerMaster forwardControl = aiMaster.Common.ForwardBackwardControl;
 
                 // Get camera focus from transform.
                 Transform cTransform = Main.craftCameraMode.Transform;
@@ -53,6 +56,8 @@ namespace FTDCraftControllerCameraMod
                 Vector3 sAngles = VehicleUtils.NormalizeAngles(sTransform.eulerAngles);
                 Vector3 dir = Vector3.Normalize(focusPoint - subject.CentreOfMass);
                 Quaternion cameraRotation = Quaternion.LookRotation(dir, Vector3.up);
+                cameraRotation = Quaternion.Euler(Mathf.Clamp(VehicleUtils.NormalizeAngle(cameraRotation.eulerAngles.x), -max_look_pitch, max_look_pitch),
+                    cameraRotation.eulerAngles.y, cameraRotation.eulerAngles.z);
                 Quaternion goalRotation = Quaternion.Inverse(sTransform.rotation) * cameraRotation;
                 Vector3 goalEula = new Vector3(cameraRotation.eulerAngles.x - sAngles.x, goalRotation.eulerAngles.y, -sAngles.z);
                 goalEula = VehicleUtils.NormalizeAngles(goalEula);
@@ -60,15 +65,12 @@ namespace FTDCraftControllerCameraMod
                 goalEula.z -= wasd_dir.x * rollToStrafe; // Hover movement rolls for left/right movement.
 
                 // Use AI PID to control.
-                // float yaw = yawControl.NewMeasurement(goalEula.y, 0f, gameTime);
                 float yaw = yawControl.NewMeasurement(goalEula.y + sAngles.y, sAngles.y, gameTime);
 
-                // float pitch = pitchControl.NewMeasurement(goalEula.x, 0f, gameTime);
                 // float pitch = pitchControl.NewMeasurement(goalEula.x + sAngles.x, sAngles.x, gameTime);
                 // TODO: Keep craft from flipping itself when pointing down?
-                float pitch = pitchControl.NewMeasurement(Mathf.Clamp(goalEula.x + sAngles.x, -90f, 90f), sAngles.x, gameTime);
+                float pitch = pitchControl.NewMeasurement(Mathf.Clamp(goalEula.x + sAngles.x, -max_pitch, max_pitch), sAngles.x, gameTime);
 
-                // float roll = rollControl.NewMeasurement(goalEula.z, 0f, gameTime);
                 float roll = rollControl.NewMeasurement(goalEula.z + sAngles.z, sAngles.z, gameTime);
                 // -1 is yaw left, +1 is yaw right
                 subject.ControlsRestricted.MakeRequest(ControlType.PitchDown, pitch);
@@ -111,19 +113,14 @@ namespace FTDCraftControllerCameraMod
                     last_hover_alt = Mathf.Clamp(last_hover_alt, // Don't try to correct over a craft's length worth of altitude.
                         current_alt - double_length, current_alt + double_length);
 
-                    /*hover += hoverControl.NewMeasurement(last_hover_alt, current_alt, gameTime);
-                    subject.ControlsRestricted.MakeRequest(ControlType.HoverUp,
-                        hover * Mathf.Cos(pitchRads) * Mathf.Cos(rollRads)); // Don't use hover if pitched or rolled over.
-                    // Use forward/backward thrust to control altitude when rotated.
-                    if (wasd_dir.z == 0f && pitchAbs > pitchToThrust)
-                        forward -= hover * Mathf.Sin(pitchRads);*/
-
-                    float hover_control = hoverControl.NewMeasurement(last_hover_alt, current_alt, gameTime);
-                    hover += hover_control * Mathf.Cos(pitchRads) * Mathf.Cos(rollRads); // Don't use hover if pitched or rolled over.
+                    // Since hover PID result is used by both hover and forward controls depending on pitch,
+                    // use separate variable to add to both axes.
+                    float hover_result = hoverControl.NewMeasurement(last_hover_alt, current_alt, gameTime);
+                    hover += hover_result * Mathf.Cos(pitchRads) * Mathf.Cos(rollRads); // Don't use hover if pitched or rolled over.
                     subject.ControlsRestricted.MakeRequest(ControlType.HoverUp, hover);
                     // Use forward/backward thrust to control altitude when rotated.
                     if (wasd_dir.z == 0f && pitchAbs > pitchToThrust)
-                        forward -= hover_control * Mathf.Sin(pitchRads);
+                        forward -= hover_result * Mathf.Sin(pitchRads);
 
                     // I forgor math signs so I won't bother with strafe altitude control.
                     // Strafe probably wouldn't help anyway since you roll to strafe in the first place.
@@ -157,17 +154,16 @@ namespace FTDCraftControllerCameraMod
             switch (movement)
             {
                 case ManoeuvreHover _:
-                    // ManoeuvreAbstract ma = (ManoeuvreAbstract) movement;
                     for (int i = 0; i < master.Pack.Packages.Count; i++)
                     {
                         AiBaseAbstract aiBaseAbstract = master.Pack.Packages[i];
                         if (aiBaseAbstract.RoutineType == AiRoutineType.Behaviour
+                            // List of frontsider behaviors.
                             && (aiBaseAbstract is BehaviourCharge
                             || aiBaseAbstract is BehaviourPointAndMaintainDistance
                             || aiBaseAbstract is BehaviourPointAndMaintainDistanceLegacy))
                             return VehicleMatch.DEFAULT;
                     }
-                    // return ma.PitchForForward > 0f && ma.RollForStrafe > 0f ? VehicleMatch.DEFAULT : VehicleMatch.NO;
                     return VehicleMatch.NO;
                 default:
                     return VehicleMatch.NO;
@@ -177,6 +173,37 @@ namespace FTDCraftControllerCameraMod
         public void Reenter()
         {
             last_hover_save = false;
+        }
+
+        public bool KeyPressed(KeyInputsForVehicles key)
+        {
+            FtdKeyMap key_map = ProfileManager.Instance.GetModule<FtdKeyMap>();
+            switch (key)
+            {
+                // Throttle
+                case KeyInputsForVehicles.AirPrimaryUp:
+                case KeyInputsForVehicles.WaterPrimaryUp:
+                    return key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held);
+                case KeyInputsForVehicles.AirPrimaryDown:
+                case KeyInputsForVehicles.WaterPrimaryDown:
+                    return key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
+                case KeyInputsForVehicles.AirPrimaryZero:
+                case KeyInputsForVehicles.WaterPrimaryZero:
+                    return key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held)
+                        && key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
+                // Hover
+                case KeyInputsForVehicles.ComplexUpArrow:
+                    return key_map.Bool(KeyInputsFtd.MoveUp, KeyInputEventType.Held);
+                case KeyInputsForVehicles.ComplexDownArrow:
+                    return key_map.Bool(KeyInputsFtd.MoveDown, KeyInputEventType.Held);
+                // Strafe
+                case KeyInputsForVehicles.ComplexLeftArrow:
+                    return key_map.Bool(KeyInputsFtd.MoveLeft, KeyInputEventType.Held);
+                case KeyInputsForVehicles.ComplexRightArrow:
+                    return key_map.Bool(KeyInputsFtd.MoveRight, KeyInputEventType.Held);
+                default:
+                    return false;
+            }
         }
     }
 }

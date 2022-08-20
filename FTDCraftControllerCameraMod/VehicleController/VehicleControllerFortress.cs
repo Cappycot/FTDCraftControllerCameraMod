@@ -35,5 +35,11 @@ namespace FTDCraftControllerCameraMod
         }
 
         public void Reenter() { }
+
+        public bool KeyPressed(KeyInputsForVehicles key)
+        {
+            // TODO: Fortress keys
+            return false;
+        }
     }
 }
