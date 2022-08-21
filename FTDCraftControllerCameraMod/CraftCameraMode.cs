@@ -30,9 +30,9 @@ namespace FTDCraftControllerCameraMod
         public Transform Transform { get; set; }
 
         private bool cancelled = false;
-        private cCameraControl ccc;
-        private I_cMovement_HUD hud;
-        private I_world_cMovement movement;
+        private readonly cCameraControl ccc;
+        private readonly I_cMovement_HUD hud;
+        private readonly I_world_cMovement movement;
         public IVehicleCamera vehicleCamera;
         public IVehicleController vehicleController;
         public MouseLook MouseLook { get; private set; }
@@ -114,7 +114,7 @@ namespace FTDCraftControllerCameraMod
             if (firstEntry)
             {
                 vehicleCamera.Enter();
-                vehicleController?.Enter(); // TODO: Should we make this non-null?
+                vehicleController?.Enter();
             }
             else
             {

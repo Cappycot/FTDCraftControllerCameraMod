@@ -62,7 +62,8 @@ namespace FTDCraftControllerCameraMod
 
             float yaw = wasd_dir.x;
             if (yaw == 0f && last_yaw_save)
-                yaw = yawControl.NewMeasurement(last_yaw_dir, sAngles.y, gameTime);
+                // yaw = yawControl.NewMeasurement(last_yaw_dir, sAngles.y, gameTime);
+                yaw = yawControl.NewMeasurement(VehicleUtils.NormalizeAngle(last_yaw_dir, sAngles.y - 180f, sAngles.y + 180f), sAngles.y, gameTime);
             else
             {
                 last_yaw_dir = sAngles.y;

@@ -37,11 +37,16 @@ namespace FTDCraftControllerCameraMod
         }
     }
 
-    // TODO: Thruster balanced controller
     [HarmonyPatch(typeof(ThrustController))]
     public class ThrustControllerHooks
     {
-
+        [HarmonyPatch("InterpretTheseInputs")]
+        [HarmonyPostfix]
+        public static void CameraAirControl(ThrustController __instance)
+        {
+            float f = 0f;
+            ControllerHooks.CraftControl(__instance, ref f);
+        }
     }
 
     // I have no clue how this works.

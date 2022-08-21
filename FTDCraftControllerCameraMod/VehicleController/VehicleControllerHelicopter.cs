@@ -68,7 +68,6 @@ namespace FTDCraftControllerCameraMod
                 float yaw = yawControl.NewMeasurement(goalEula.y + sAngles.y, sAngles.y, gameTime);
 
                 // float pitch = pitchControl.NewMeasurement(goalEula.x + sAngles.x, sAngles.x, gameTime);
-                // TODO: Keep craft from flipping itself when pointing down?
                 float pitch = pitchControl.NewMeasurement(Mathf.Clamp(goalEula.x + sAngles.x, -max_pitch, max_pitch), sAngles.x, gameTime);
 
                 float roll = rollControl.NewMeasurement(goalEula.z + sAngles.z, sAngles.z, gameTime);

@@ -33,12 +33,36 @@ namespace FTDCraftControllerCameraMod
             bool hover_for_pitch = false;
             FtdKeyMap key_map = ProfileManager.Instance.GetModule<FtdKeyMap>();
             Vector3 wasd_dir = key_map.GetMovementDirection(false);
+            float pitch_dir = -wasd_dir.y * pitch_for_alt;
             float yaw_dir = wasd_dir.x * 90f;
             float roll_goal = 0f;
             float roll_max;
             float wander_distance;
 
-            if (last_yaw_save && wasd_dir.x == 0f)
+            float min_alt = Mathf.Max(StaticTerrainAltitude.AltitudeForGameWorldPositionInMainFrame(subject.CentreOfMass)
+                + master.Adjustments.MinimumAltitudeAboveLand,
+                master.Adjustments.MinimumAltitudeAboveWater);
+            float max_alt = Mathf.Max(min_alt, master.Adjustments.MaximumAltitude);
+
+            bool cam_mode = key_map.Bool(KeyInputsFtd.SpeedUpCamera, KeyInputEventType.Held);
+            if (cam_mode && movement is ManoeuvreAbstract mw)
+            {
+                // Get camera focus from transform.
+                Transform cTransform = Main.craftCameraMode.Transform;
+                // Vector3 focusPoint = cTransform.position + FOCUS_DISTANCE * cTransform.forward;
+                Vector3 focusPoint = cTransform.position + mw.WanderDistance.Us * cTransform.forward;
+                focusPoint.y = Mathf.Clamp(focusPoint.y, min_alt, max_alt);
+
+                // Calculate pitch, yaw, roll for vehicle to camera.
+                Vector3 dir = Vector3.Normalize(focusPoint - subject.CentreOfMass);
+                Quaternion cameraRotation = Quaternion.LookRotation(dir, Vector3.up);
+                pitch_dir = VehicleUtils.NormalizeAngle(cameraRotation.eulerAngles.x);
+                last_yaw_dir = VehicleUtils.NormalizeAngle(cameraRotation.eulerAngles.y);
+                last_yaw_save = true;
+                last_hover_save = false;
+            }
+
+            if (last_yaw_save && wasd_dir.x == 0f || cam_mode)
                 yaw_dir = VehicleUtils.NormalizeAngle(last_yaw_dir - VehicleUtils.NormalizeAngle(sAngles.y));
             else
                 last_yaw_dir = VehicleUtils.NormalizeAngle(sAngles.y);
@@ -71,10 +95,11 @@ namespace FTDCraftControllerCameraMod
                 last_yaw_save = false;
                 return;
             }
+            // TODO: Clean up cam mode.
+            pitch_dir = Mathf.Clamp(pitch_dir, -pitch_for_alt, pitch_for_alt);
 
             float gameTime = GameTimer.Instance.TimeCache;
             float current_alt = subject.CentreOfMass.y;
-            float pitch_dir = -wasd_dir.y * pitch_for_alt;
             float roll_rads = sAngles.z * Mathf.Deg2Rad;
 
             // TODO: Are these PIDs even okay in multiplayer?
@@ -84,12 +109,7 @@ namespace FTDCraftControllerCameraMod
             VariableControllerMaster pitchControl = master.Common.PitchControl;
 
             // Player controls hover iff use_hover is true, wasd_dir.y != 0f and current altitude is within AI adjustments.
-            float min_alt = Mathf.Max(StaticTerrainAltitude.AltitudeForGameWorldPositionInMainFrame(subject.CentreOfMass)
-                + master.Adjustments.MinimumAltitudeAboveLand,
-                master.Adjustments.MinimumAltitudeAboveWater);
-            float max_alt = Mathf.Max(min_alt, master.Adjustments.MaximumAltitude);
-
-            if (wasd_dir.y != 0)
+            if (!last_hover_save || wasd_dir.y != 0 || cam_mode)
                 last_hover_alt = lowest_hover_alt = Mathf.Clamp(current_alt, min_alt, max_alt);
             else
                 last_hover_alt = Mathf.Min(Mathf.Clamp(last_hover_alt, min_alt, max_alt),
@@ -98,6 +118,7 @@ namespace FTDCraftControllerCameraMod
             if (wasd_dir.y < 0f && current_alt > min_alt
                 || wasd_dir.y > 0f && current_alt < max_alt)
             {
+                // TODO: Which line is dupe?
                 last_hover_alt = lowest_hover_alt = Mathf.Clamp(current_alt, min_alt, max_alt);
                 subject.ControlsRestricted.MakeRequest(ControlType.HoverUp, wasd_dir.y);
                 subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight, wasd_dir.y * Mathf.Sin(roll_rads));
@@ -189,22 +210,23 @@ namespace FTDCraftControllerCameraMod
         public bool KeyPressed(KeyInputsForVehicles key)
         {
             FtdKeyMap key_map = ProfileManager.Instance.GetModule<FtdKeyMap>();
+            bool cam_mode = key_map.Bool(KeyInputsFtd.SpeedUpCamera, KeyInputEventType.Held);
             switch (key)
             {
                 // Yaw
                 case KeyInputsForVehicles.AirYawLeft:
                 case KeyInputsForVehicles.WaterYawLeft:
-                    return key_map.Bool(KeyInputsFtd.MoveLeft, KeyInputEventType.Held);
+                    return !cam_mode && key_map.Bool(KeyInputsFtd.MoveLeft, KeyInputEventType.Held);
                 case KeyInputsForVehicles.AirYawRight:
                 case KeyInputsForVehicles.WaterYawRight:
-                    return key_map.Bool(KeyInputsFtd.MoveRight, KeyInputEventType.Held);
+                    return !cam_mode && key_map.Bool(KeyInputsFtd.MoveRight, KeyInputEventType.Held);
                 // Pitch
                 case KeyInputsForVehicles.AirPitchUp:
                 case KeyInputsForVehicles.WaterPitchUp:
-                    return key_map.Bool(KeyInputsFtd.MoveUp, KeyInputEventType.Held);
+                    return !cam_mode && key_map.Bool(KeyInputsFtd.MoveUp, KeyInputEventType.Held);
                 case KeyInputsForVehicles.AirPitchDown:
                 case KeyInputsForVehicles.WaterPitchDown:
-                    return key_map.Bool(KeyInputsFtd.MoveDown, KeyInputEventType.Held);
+                    return !cam_mode && key_map.Bool(KeyInputsFtd.MoveDown, KeyInputEventType.Held);
                 // Throttle
                 case KeyInputsForVehicles.AirPrimaryUp:
                 case KeyInputsForVehicles.WaterPrimaryUp:
