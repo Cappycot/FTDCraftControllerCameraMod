@@ -162,7 +162,7 @@ namespace FTDCraftControllerCameraMod
                 subject.ControlsRestricted.MakeRequest(ControlType.PrimaryIncrease, wasd_dir.z);
 
             last_hover_save = true;
-            last_yaw_save = true;
+            last_yaw_save = !cam_mode;
         }
 
         public void Enter()
