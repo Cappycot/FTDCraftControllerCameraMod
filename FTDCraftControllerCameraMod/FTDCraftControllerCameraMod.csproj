@@ -76,6 +76,7 @@
   <ItemGroup>
     <Compile Include="CameraModeHooks.cs" />
     <Compile Include="ChairHooks.cs" />
+    <Compile Include="VehicleController\VehicleControllerSixAxis.cs" />
     <Compile Include="VehicleController\VehicleControllerAircraftUpright.cs" />
     <Compile Include="VehicleController\VehicleControllerFortress.cs" />
     <Compile Include="VehicleController\VehicleControllerShipUpright.cs" />

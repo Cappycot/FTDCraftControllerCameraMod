@@ -78,7 +78,7 @@ namespace FTDCraftControllerCameraMod
                         break;
                 }
             }
-            if (controller != null)
+            /*if (controller != null)
             {
                 switch (controller.Data.Type.Us)
                 {
@@ -92,7 +92,7 @@ namespace FTDCraftControllerCameraMod
                     default:
                         break;
                 }
-            }
+            }*/
             return subject.GetForce().TravelRestrictions == ForceTravelRestrictions.Air
                 ? VehicleMatch.DEFAULT : VehicleMatch.NO;
         }
