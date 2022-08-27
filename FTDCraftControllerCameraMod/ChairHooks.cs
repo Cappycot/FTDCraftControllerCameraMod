@@ -17,7 +17,7 @@ namespace FTDCraftControllerCameraMod
             // Allow if the key being used is not the weapon switch key or if we are not in craft camera.
             return IsWarpToNextChair && !keyMap.IsLastBindingSame(KeyInputsFtd.WeaponNext, KeyInputsFtd.NextVehicle)
                 || !IsWarpToNextChair && !keyMap.IsLastBindingSame(KeyInputsFtd.WeaponPrevious, KeyInputsFtd.PreviousVehicle)
-                || CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+                || CameraManager.GetSingleton().CamControl.CurrentMode != Main.craftCameraMode;
         }
     }
 }

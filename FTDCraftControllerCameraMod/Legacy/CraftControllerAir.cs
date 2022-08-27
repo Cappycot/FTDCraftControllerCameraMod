@@ -26,7 +26,7 @@ namespace FTDCraftControllerCameraMod
         //[HarmonyPostfix]
         public static void CameraAirControl(ConstructableController __instance, ref float __result)
         {
-            if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode
+            if (CameraManager.GetSingleton().CamControl.CurrentMode == Main.craftCameraMode
                 // && Main.craftCameraMode.CameraType == EnumCraftCameraType.AIR_DEFAULT
                 && Main.craftCameraMode.vehicleCamera is VehicleCameraAirDefault
                 // && Main.airControlSubject == Main.craftCameraMode.Subject

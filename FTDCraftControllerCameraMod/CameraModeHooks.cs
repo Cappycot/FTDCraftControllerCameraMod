@@ -16,7 +16,7 @@ namespace FTDCraftControllerCameraMod
         public static void AttachCraftCamera(cCameraControl __instance, I_cMovement_HUD ___iHUD)
         {
             // First perform minimal checks that are done every frame.
-            ICameraMode current = CameraManager.GetSingleton().CurrentMode;
+            ICameraMode current = CameraManager.GetSingleton().CamControl.CurrentMode;
             if (current == Main.craftCameraMode)
                 Main.craftCameraMode.UpdatePosition();
             else if (__instance.CameraState == enumCameraState.firstPerson)
@@ -31,7 +31,7 @@ namespace FTDCraftControllerCameraMod
                     {
                         MainConstruct subject = i_world_cMovement.TheChair().MainConstruct as MainConstruct;
                         Main.craftCameraMode = Main.craftCameraMode ?? new CraftCameraMode(__instance, ___iHUD, subject);
-                        CameraManager.GetSingleton().AddCameraMode(Main.craftCameraMode);
+                        CameraManager.GetSingleton().CamControl.AddCameraMode(Main.craftCameraMode);
                     }
                     else
                         Main.craftCameraMode = null;
@@ -54,7 +54,7 @@ namespace FTDCraftControllerCameraMod
         [HarmonyPostfix]
         public static void DenyFirstPerson(ref bool __result)
         {
-            __result = __result && CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+            __result = __result && CameraManager.GetSingleton().CamControl.CurrentMode != Main.craftCameraMode;
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace FTDCraftControllerCameraMod
         [HarmonyPrefix]
         public static bool CancelCraftCamera()
         {
-            if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode)
+            if (CameraManager.GetSingleton().CamControl.CurrentMode == Main.craftCameraMode)
             {
                 Main.craftCameraMode.Cancel();
                 return false;

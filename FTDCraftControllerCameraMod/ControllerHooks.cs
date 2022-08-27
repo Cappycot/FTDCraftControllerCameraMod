@@ -26,7 +26,7 @@ namespace FTDCraftControllerCameraMod
         public static void CraftControl(ConstructableController constructableController, ref float result)
         {
             CraftCameraMode ccm = Main.craftCameraMode;
-            if (CameraManager.GetSingleton().CurrentMode == ccm
+            if (CameraManager.GetSingleton().CamControl.CurrentMode == ccm
                 && ccm.Subject == constructableController.MainConstruct)
             {
                 AiMaster master = VehicleUtils.GetMovementAiFromMainConstruct(ccm.Subject, out IManoeuvre movement);
@@ -59,7 +59,7 @@ namespace FTDCraftControllerCameraMod
         {
             CraftCameraMode ccm = Main.craftCameraMode;
             IVehicleController vc = ccm?.vehicleController;
-            if (CameraManager.GetSingleton().CurrentMode == ccm && vc != null)
+            if (CameraManager.GetSingleton().CamControl.CurrentMode == ccm && vc != null)
                 __result |= vc.KeyPressed(id);
         }
     }
@@ -77,7 +77,7 @@ namespace FTDCraftControllerCameraMod
             FtdKeyMap keyMap = ProfileManager.Instance.GetModule<FtdKeyMap>();
             // Allow if the key being used is not the zoom axis or if we are not in craft camera.
             return !keyMap.IsLastBindingSame(KeyInputsFtd.WeaponNext, KeyInputsFtd.ZoomIn)
-                || CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+                || CameraManager.GetSingleton().CamControl.CurrentMode != Main.craftCameraMode;
         }
 
         [HarmonyPatch("DecreaseWeaponSlot")]
@@ -86,7 +86,7 @@ namespace FTDCraftControllerCameraMod
         {
             FtdKeyMap keyMap = ProfileManager.Instance.GetModule<FtdKeyMap>();
             return !keyMap.IsLastBindingSame(KeyInputsFtd.WeaponPrevious, KeyInputsFtd.ZoomOut)
-                || CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+                || CameraManager.GetSingleton().CamControl.CurrentMode != Main.craftCameraMode;
         }
     }
 }

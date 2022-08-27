@@ -12,28 +12,28 @@ namespace FTDCraftControllerCameraMod
         [HarmonyPrefix]
         public static bool BlockLeftClick(bool b)
         {
-            return !b || CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+            return !b || CameraManager.GetSingleton().CamControl.CurrentMode != Main.craftCameraMode;
         }
 
         [HarmonyPatch("RightClick")]
         [HarmonyPrefix]
         public static bool BlockRightClick(bool b)
         {
-            return !b || CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+            return !b || CameraManager.GetSingleton().CamControl.CurrentMode != Main.craftCameraMode;
         }
 
         [HarmonyPatch("LeftClickDown")]
         [HarmonyPrefix]
         public static bool BlockLeftClickDown()
         {
-            return CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+            return CameraManager.GetSingleton().CamControl.CurrentMode != Main.craftCameraMode;
         }
 
         [HarmonyPatch("RightClickDown")]
         [HarmonyPrefix]
         public static bool BlockRightClickDown()
         {
-            return CameraManager.GetSingleton().CurrentMode != Main.craftCameraMode;
+            return CameraManager.GetSingleton().CamControl.CurrentMode != Main.craftCameraMode;
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace FTDCraftControllerCameraMod
         [HarmonyPrefix]
         public static bool RedirectItemSlotToWeaponSlot(int i)
         {
-            if (CameraManager.GetSingleton().CurrentMode == Main.craftCameraMode)
+            if (CameraManager.GetSingleton().CamControl.CurrentMode == Main.craftCameraMode)
             {
                 // i is 0-9 based on left to right number keys
                 // Weapon Slot Key:
