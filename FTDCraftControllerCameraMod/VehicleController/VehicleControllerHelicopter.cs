@@ -93,14 +93,14 @@ namespace FTDCraftControllerCameraMod
                     hover = forward_cancel * Mathf.Sin(pitchRads);
                 }
                 else
-                    hover = wasd_dir.z * Mathf.Sin(pitchToThrust * Mathf.Deg2Rad) * SQRT_TWO; // At 45 degrees pitch, we want hover to kick in at max.
+                    hover = Mathf.Abs(wasd_dir.z * Mathf.Sin(pitchToThrust * Mathf.Deg2Rad));
                 // Strafe Dampener
                 if (wasd_dir.x == 0f)
                     subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight,
                         strafeControl.NewMeasurement(0f, Vector3.Project(normalVelocity, Vector3.right).x, gameTime));
                 else
                 {
-                    hover += wasd_dir.x * -Mathf.Sin(rollRads) * SQRT_TWO; // At 45 degrees roll, we want hover to kick in at max.
+                    hover += wasd_dir.x * -Mathf.Sin(rollRads);
                     subject.ControlsRestricted.MakeRequest(ControlType.StrafeRight,
                         wasd_dir.x * Mathf.Cos(rollRads));
                 }
@@ -188,8 +188,8 @@ namespace FTDCraftControllerCameraMod
                     return key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
                 case KeyInputsForVehicles.AirPrimaryZero:
                 case KeyInputsForVehicles.WaterPrimaryZero:
-                    return key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held)
-                        && key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
+                    return !key_map.Bool(KeyInputsFtd.MoveForward, KeyInputEventType.Held)
+                        && !key_map.Bool(KeyInputsFtd.MoveBackward, KeyInputEventType.Held);
                 // Hover
                 case KeyInputsForVehicles.ComplexUpArrow:
                     return key_map.Bool(KeyInputsFtd.MoveUp, KeyInputEventType.Held);
