@@ -116,7 +116,7 @@ namespace FTDCraftControllerCameraMod
                         subject.ControlsRestricted.StopDrive(Drive.Main);
                         brake_timer.Now(ConstructableController.brakeTime);
                     }
-                    else if (brake_timer.Happened)
+                    else if (brake_timer.HappenedOrNeverSet)
                         subject.ControlsRestricted.MakeRequest(ControlType.PrimaryIncrease, wasd_dir.z);
                 }
 
