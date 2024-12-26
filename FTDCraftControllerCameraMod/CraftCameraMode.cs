@@ -107,7 +107,7 @@ namespace FTDCraftControllerCameraMod
         public void Reenter(bool firstEntry)
         {
             // CameraType = CraftCameraType.GuessConstructCameraType(Subject);
-            CameraManager.GetSingleton().CancelExternalCameraFocus();
+            CameraManager.GetSingleton().CamControl.CancelExternalCameraFocus();
             hud.SetCameraState(enumCameraState.unparented);
             MouseLook.enabled = true;
             GuessConstructCameraAndControl();

@@ -131,13 +131,7 @@ namespace FTDCraftControllerCameraMod
                     last_hover_alt = current_alt;
                 }
                 last_hover_save = true;
-                if (wasd_dir.z == 0f)
-                {
-                    subject.ControlsRestricted.StopDrive(Drive.Main);
-                    subject.ControlsRestricted.MakeRequest(ControlType.ThrustForward, forward);
-                }
-                else
-                    subject.ControlsRestricted.MakeRequest(ControlType.PrimaryRun, forward);
+                subject.ControlsRestricted.MakeRequest(ControlType.ThrustForward, forward);
             }
             else
                 last_hover_save = false;

@@ -1,8 +1,8 @@
 {
     "name": "Craft Controller Camera",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "filename": "0Harmony.dll,FTDCraftControllerCameraMod.dll",
-    "gameversion": "3.4.3.10",
+    "gameversion": "4.1.2.0",
     "depends": [],
     "conflicts": []
 }

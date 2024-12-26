@@ -87,7 +87,7 @@ namespace FTDCraftControllerCameraMod
                 subject.ControlsRestricted.StopDrive(Drive.Main);
                 brake_timer.Now(ConstructableController.brakeTime);
             }
-            if (wasd_dir.z != 0f && brake_timer.Happened)
+            if (wasd_dir.z != 0f && brake_timer.HappenedOrNeverSet)
                 subject.ControlsRestricted.MakeRequest(ControlType.PrimaryIncrease, wasd_dir.z);
             // Attempt to actively dampen forward speed if throttle ordered stop.
             else if (subject.ControlsRestricted.MainSpeed == 0f)

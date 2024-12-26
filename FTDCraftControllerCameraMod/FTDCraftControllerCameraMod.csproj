@@ -37,11 +37,17 @@
     <Reference Include="Ai">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\Ai.dll</HintPath>
     </Reference>
+    <Reference Include="CamControl">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\CamControl.dll</HintPath>
+    </Reference>
     <Reference Include="Common">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\Common.dll</HintPath>
     </Reference>
     <Reference Include="Core">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\Core.dll</HintPath>
+    </Reference>
+    <Reference Include="DataManagement">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\DataManagement.dll</HintPath>
     </Reference>
     <Reference Include="Effects">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\Effects.dll</HintPath>
@@ -54,6 +60,10 @@
     </Reference>
     <Reference Include="Modding">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\Modding.dll</HintPath>
+    </Reference>
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\netstandard.dll</HintPath>
     </Reference>
     <Reference Include="PlayerProfiles">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\PlayerProfiles.dll</HintPath>
